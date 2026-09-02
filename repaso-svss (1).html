@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repaso SVSS · Decreto 185/2015</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --ink:#1E2A38;
+    --ink-soft:#2B3B4E;
+    --paper:#F1ECE0;
+    --paper-panel:#FAF7F0;
+    --gold:#B8863B;
+    --gold-soft:#E4CFA0;
+    --ok:#3F7A5D;
+    --err:#B4472F;
+    --text:#23262B;
+    --muted:#8B93A1;
+    --line:#DDD5C2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
+  .app{ display:flex; min-height:100vh; max-width:1180px; margin:0 auto; }
+
+  /* ---- Sidebar ---- */
+  .sidebar{
+    width:300px; flex-shrink:0;
+    background:var(--ink);
+    color:#EDE8DA;
+    padding:28px 22px;
+    position:relative;
+  }
+  .brand{ font-size:13px; letter-spacing:.02em; color:var(--gold-soft); margin-bottom:2px;}
+  .brand-title{ font-family:'Fraunces', serif; font-size:22px; font-weight:600; margin:0 0 26px 0; color:#fff;}
+  .repaso-btn{
+    display:block; width:100%; text-align:left;
+    background:var(--gold); color:var(--ink); border:none;
+    font-family:'IBM Plex Sans'; font-weight:600; font-size:14px;
+    padding:12px 14px; border-radius:3px; cursor:pointer; margin-bottom:28px;
+  }
+  .repaso-btn:hover{ background:#c99a4c; }
+  .timeline-label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#8592A3; margin-bottom:14px; }
+  .timeline{ list-style:none; margin:0; padding:0; border-left:1px solid #3A4A5D; }
+  .tl-item{ position:relative; padding:0 0 20px 20px; cursor:pointer; }
+  .tl-item::before{
+    content:''; position:absolute; left:-4.5px; top:3px; width:8px; height:8px;
+    border-radius:50%; background:#5A6C80; border:2px solid var(--ink);
+  }
+  .tl-item.active::before{ background:var(--gold); }
+  .tl-item.locked::before{ background:#3A4A5D; }
+  .tl-range{ font-family:'IBM Plex Mono'; font-size:11px; color:#8592A3; }
+  .tl-temas{ font-size:13px; color:#D9D2C2; margin-top:2px; }
+  .tl-item.active .tl-temas{ color:#fff; }
+  .tl-item.locked .tl-temas{ color:#5A6472; }
+  .tl-tag{ display:inline-block; font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink); background:var(--gold-soft); padding:1px 6px; border-radius:2px; margin-top:5px;}
+
+  /* ---- Main ---- */
+  .main{ flex:1; padding:40px 48px; }
+  .eyebrow{ color:var(--gold); font-size:13px; font-weight:600; margin-bottom:6px;}
+  .page-title{ font-size:30px; margin:0 0 8px 0; }
+  .page-sub{ color:var(--muted); margin-bottom:34px; max-width:60ch;}
+
+  .home-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:10px;}
+  .card{ background:var(--paper-panel); border:1px solid var(--line); border-radius:4px; padding:20px; }
+  .card h3{ margin:0 0 6px 0; font-size:17px; }
+  .card p{ margin:0; color:var(--muted); font-size:13.5px; }
+
+  .tema-block{ margin-bottom:38px; }
+  .tema-heading{
+    display:flex; align-items:baseline; gap:10px; border-bottom:2px solid var(--ink);
+    padding-bottom:8px; margin-bottom:18px;
+  }
+  .tema-heading h2{ font-size:19px; margin:0; }
+  .tema-count{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--muted); }
+
+  .q{ background:var(--paper-panel); border:1px solid var(--line); border-radius:4px; padding:18px 20px; margin-bottom:12px;}
+  .q-num{ font-family:'IBM Plex Mono'; font-size:12px; color:var(--gold); margin-bottom:6px; display:block;}
+  .q-text{ font-size:15px; margin:0 0 12px 0; font-weight:500;}
+  .opt{ display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--line); border-radius:3px; margin-bottom:7px; cursor:pointer; font-size:14px;}
+  .opt:hover{ border-color:var(--gold); }
+  .opt input{ accent-color:var(--gold); }
+  .opt.correct{ border-color:var(--ok); background:#EAF3EE; }
+  .opt.incorrect{ border-color:var(--err); background:#F8EAE6; }
+
+  .q-ficha{ font-family:'IBM Plex Mono'; font-size:10.5px; letter-spacing:.02em; background:var(--gold-soft); color:var(--ink); padding:1px 7px; border-radius:2px; margin-left:8px; vertical-align:middle;}
+  .dev-q{ background:var(--ink); color:#EDE8DA; border-radius:4px; padding:22px 24px; margin-bottom:16px;}
+  .dev-q .q-ficha{ background:#3A4A5D; color:#EDE8DA; }
+  .dev-q .q-num{ color:var(--gold-soft); }
+  .dev-q textarea{ width:100%; min-height:80px; background:#28374A; color:#fff; border:1px solid #3A4A5D; border-radius:3px; padding:10px; font-family:inherit; margin-top:10px; resize:vertical;}
+  .reveal-btn{ background:none; border:1px solid var(--gold-soft); color:var(--gold-soft); font-size:12.5px; padding:6px 12px; border-radius:3px; cursor:pointer; margin-top:10px;}
+  .reveal-box{ margin-top:12px; font-size:13.5px; color:#D9D2C2; border-top:1px solid #3A4A5D; padding-top:10px; display:none;}
+  .reveal-box.open{ display:block; }
+
+  .submit-bar{ display:flex; justify-content:space-between; align-items:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--line);}
+  .btn{ background:var(--ink); color:#fff; border:none; padding:11px 22px; border-radius:3px; font-family:'IBM Plex Sans'; font-weight:600; font-size:14px; cursor:pointer;}
+  .btn:hover{ background:var(--ink-soft); }
+  .score{ font-family:'IBM Plex Mono'; font-size:14px; }
+
+  .placeholder-flag{ display:inline-block; font-size:10.5px; letter-spacing:.03em; text-transform:uppercase; color:var(--err); border:1px solid var(--err); padding:1px 6px; border-radius:2px; margin-bottom:10px;}
+
+  .repaso-config{ background:var(--paper-panel); border:1px solid var(--line); border-radius:4px; padding:26px; max-width:480px;}
+  .segmented{ display:flex; gap:8px; margin:14px 0 22px 0;}
+  .seg-opt{ flex:1; text-align:center; padding:10px; border:1px solid var(--line); border-radius:3px; cursor:pointer; font-family:'IBM Plex Mono'; font-size:14px;}
+  .seg-opt.sel{ border-color:var(--gold); background:var(--gold-soft); }
+
+  @media (max-width:820px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; padding:20px; }
+    .timeline{ display:flex; overflow-x:auto; border-left:none; gap:14px; padding-bottom:6px; }
+    .tl-item{ padding:0 0 0 0; min-width:150px; border-left:1px solid #3A4A5D; padding-left:12px; }
+    .tl-item::before{ display:none; }
+    .main{ padding:26px 22px; }
+    .home-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ---- Login ---- */
+  .login-screen{ min-height:100vh; width:100%; display:flex; align-items:center; justify-content:center; background:var(--ink); padding:24px; }
+  .login-box{ background:var(--paper-panel); border-radius:6px; padding:38px 34px; max-width:400px; width:100%; text-align:left; }
+  .login-box .brand{ color:var(--gold); font-size:13px; margin-bottom:4px; }
+  .login-box h1{ font-family:'Fraunces', serif; font-size:24px; margin:0 0 8px 0; }
+  .login-box p{ color:var(--muted); font-size:14px; margin:0 0 20px 0; }
+  .login-box input{ width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:3px; font-family:'IBM Plex Sans'; font-size:15px; margin-bottom:14px; }
+  .login-box input:focus{ outline:2px solid var(--gold); border-color:var(--gold); }
+
+  /* ---- User badge ---- */
+  .user-badge{ display:flex; align-items:center; justify-content:space-between; background:#28374A; border-radius:4px; padding:10px 12px; margin-bottom:22px; }
+  .user-badge .u-name{ font-size:13px; color:#fff; font-weight:600; }
+  .user-badge .u-switch{ font-size:11px; color:var(--gold-soft); text-decoration:none; cursor:pointer; }
+
+  /* ---- Registro ---- */
+  .reg-table{ width:100%; border-collapse:collapse; font-size:13.5px; margin-top:10px; }
+  .reg-table th{ text-align:left; font-family:'IBM Plex Mono'; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); border-bottom:2px solid var(--ink); padding:8px 10px; }
+  .reg-table td{ padding:9px 10px; border-bottom:1px solid var(--line); }
+  .reg-table tr:hover td{ background:var(--paper-panel); }
+  .reg-score{ font-family:'IBM Plex Mono'; }
+  .reg-summary-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; margin:18px 0 30px 0; }
+  .reg-summary-card{ background:var(--paper-panel); border:1px solid var(--line); border-radius:4px; padding:14px 16px;}
+  .reg-summary-card .u{ font-weight:600; font-size:14px; margin-bottom:4px;}
+  .reg-summary-card .s{ font-family:'IBM Plex Mono'; font-size:12.5px; color:var(--muted);}
+  .reg-empty{ color:var(--muted); font-size:14px; padding:30px 0; }
+  .reg-loading{ color:var(--muted); font-size:14px; padding:30px 0; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+/* ===================== FIREBASE (registro compartido) ===================== */
+// 1. Crea un proyecto gratuito en https://console.firebase.google.com
+// 2. Activa Firestore Database (modo de prueba)
+// 3. Pega aquí la configuración de tu proyecto (Configuración del proyecto → tus apps → SDK config)
+const firebaseConfig = {
+  apiKey: "AIzaSyAJkHbGWfEuDCQU7x2jDZ4noDnpfjzBeb0",
+  authDomain: "decreto-de-cartera.firebaseapp.com",
+  projectId: "decreto-de-cartera",
+  storageBucket: "decreto-de-cartera.firebasestorage.app",
+  messagingSenderId: "878539170282",
+  appId: "1:878539170282:web:40b9bd09d496c28283d293",
+  measurementId: "G-F7PS87BMZB"
+};
+let db = null;
+let firebaseReady = false;
+try{
+  if(firebaseConfig.apiKey !== "TU_API_KEY"){
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    firebaseReady = true;
+  }
+}catch(e){ console.warn('Firebase no configurado o falló la inicialización:', e); }
+
+/* ===================== DATOS ===================== */
+/* Semanas 1-3: contenido de MUESTRA (marcado como placeholder) para validar la estructura.
+   El resto del cronograma se muestra "bloqueado" solo para visualizar el alcance completo. */
+
+function sampleQuestions(temaLabel){
+  const qs = [];
+  for(let i=1;i<=10;i++){
+    qs.push({
+      text: `[Muestra] Pregunta ${i} de alta dificultad sobre "${temaLabel}" — se sustituirá por contenido real del Decreto 185/2015.`,
+      options: ['Opción A (a definir)','Opción B (a definir)','Opción C (a definir)','Opción D (a definir)'],
+      correct: 0
+    });
+  }
+  return qs;
+}
+function fichaFromName(name){ return 'Ficha ' + name.split(' ')[0]; }
+
+const weeks = [
+  {
+    id:'w1', range:'01/09 – 07/09', locked:false,
+    temas:[
+      { name:'2.1 Valoración y diagnóstico', ficha:'Ficha 2.1', questions:[
+          { text:'Según el Anexo I del Decreto, ¿de qué administración es competencia la prestación del Servicio de valoración y diagnóstico de la dependencia, la discapacidad, la exclusión y la desprotección (ficha 2.1)?', options:['De competencia municipal, a través del Servicio Social de Base','De competencia foral (diputaciones forales)','Del Gobierno Vasco, de forma centralizada','Es una competencia compartida entre municipio y Gobierno Vasco a partes iguales'], correct:1 },
+          { text:'¿Cuál es la población destinataria del servicio, en cuanto a "situación", según su ficha?', options:['Solo personas con dependencia ya reconocida','Solo personas mayores de 65 años','Toda la población','Únicamente personas ya usuarias de un servicio de atención secundaria'], correct:2 },
+          { text:'¿Qué límite de edad establece la ficha 2.1 para acceder al servicio?', options:['Sin límites de edad','65 años o más','Entre 18 y 64 años','Entre 0 y 18 años'], correct:0 },
+          { text:'¿En qué supuesto la propia ficha exime del requisito de empadronamiento en un municipio del Territorio Histórico?', options:['Cuando la persona solicitante sea mayor de 80 años','Cuando la intervención se oriente a atender situaciones de riesgo de desprotección o desamparo que afecten a personas menores de edad','Cuando la solicitud la presente un familiar y no la propia persona interesada','Nunca se exime este requisito, es siempre obligatorio'], correct:1 },
+          { text:'Según la definición de su ficha, ¿qué facilita este servicio?', options:['La identificación y, en su caso, la gradación de las situaciones de dependencia, discapacidad, desprotección y exclusión','La concesión directa de la prestación económica vinculada al servicio','La gestión exclusiva de listas de espera de centros residenciales','La sustitución del Servicio Social de Base en la tramitación de expedientes'], correct:0 },
+          { text:'Además de facilitar la identificación de esas situaciones, ¿hacia qué orienta este servicio a las personas solicitantes, según su ficha?', options:['Únicamente hacia servicios de competencia municipal','Hacia el servicio o la prestación económica, o hacia la combinación de servicios y/o prestaciones económicas, que mejor respondan a sus necesidades','Exclusivamente hacia recursos sanitarios de Osakidetza','Hacia cualquier recurso, sin condición alguna'], correct:1 },
+          { text:'Esa orientación hacia un servicio, prestación económica o su combinación, según la ficha, se realiza...', options:['De forma automática en todos los casos, sin más trámite','Siempre que la persona cumpla los requisitos de acceso a los mismos','Solo si lo solicita expresamente por escrito ante el Gobierno Vasco','Únicamente cuando medie resolución judicial'], correct:1 },
+          { text:'La letra a) de la definición de la ficha 2.1 dice que el servicio incluye "la valoración de las solicitudes o, en su caso, la valoración de..."', options:['...las situaciones comunicadas por otras instituciones en relación con posibles situaciones de dependencia, discapacidad, desprotección y/o exclusión','...las reclamaciones presentadas contra resoluciones de otros servicios','...las quejas ciudadanas sobre el funcionamiento del SVSS','...las solicitudes de prestaciones económicas ya concedidas'], correct:0 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales que recoge expresamente la ficha 2.1?', options:['Valoración y diagnóstico social especializados, y orientación','Valoración, diagnóstico y atención personal','Diagnóstico, orientación y mediación-intermediación','Valoración, orientación y transporte adaptado'], correct:0 },
+          { text:'Como requisito de necesidad, la ficha 2.1 exige presentar indicios de poder encontrarse en situación de dependencia, discapacidad, desprotección o exclusión, en los términos definidos en...', options:['...los instrumentos comunes de valoración del riesgo y de las situaciones de necesidad','...el informe médico de Osakidetza','...la declaración de la renta del último ejercicio','...el certificado de empadronamiento histórico'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la propia ficha 2.1, explica qué dos actuaciones incluye este servicio (apartados a y b de su definición), a qué población se dirige, y en qué supuesto concreto se exime del requisito de empadronamiento.', puntos:['a) La valoración de las solicitudes o de las situaciones comunicadas por otras instituciones en relación con posibles situaciones de dependencia, discapacidad, desprotección y/o exclusión.','b) En su caso, la realización de diagnósticos sociales especializados y la orientación hacia los recursos idóneos del SVSS y/o la derivación a otros sistemas.','Población: toda la población, sin límites de edad.','Excepción al empadronamiento: cuando la intervención se oriente a atender situaciones de riesgo de desprotección o desamparo que afecten a personas menores de edad.'] } },
+      { name:'2.2.1 Centro de día — limitaciones autonomía', ficha:'Ficha 2.2.1', questions:[
+          { text:'El servicio o centro de día para atender necesidades derivadas de limitaciones en la autonomía (2.2.1) se define como un servicio de...', options:['Baja intensidad, de acceso directo sin prescripción técnica','Media y alta intensidad, de atención diurna, temporal o permanente','Exclusivamente de urgencia, de estancia máxima de 72 horas','Alta exigencia y baja intensidad de apoyo'], correct:1 },
+          { text:'¿Qué garantiza este servicio durante las horas de apertura, según su ficha?', options:['Transporte adaptado gratuito para todas las personas usuarias','Presencia permanente de personal cuidador (y educativo en el 2º tipo), servicio médico/enfermería en su caso, y apoyo de equipo multidisciplinar','Alojamiento nocturno de emergencia','Gratuidad total del servicio sin copago'], correct:1 },
+          { text:'¿Cuántos tipos de servicio o centro de día distingue la ficha 2.2.1 y a quién se dirige el "tipo 1"?', options:['Un único tipo, para toda la población sin distinción','Cuatro tipos: el tipo 1 para personas mayores en situación de dependencia; los tipos 2, 3 y 4 para personas con discapacidad o enfermedad mental crónica','Dos tipos: mayores y menores de edad','Tres tipos, organizados exclusivamente por grado de discapacidad'], correct:1 },
+          { text:'Dentro de los tipos 2, 3 y 4 (discapacidad / enfermedad mental crónica), ¿cuál de estos NO es uno de los tres subtipos previstos?', options:['Centros de autonomía personal para personas con graves limitaciones físicas u orgánicas','Servicio o centro de día para personas con discapacidad intelectual y del desarrollo','Servicio o centro de día para personas con enfermedad mental crónica, de naturaleza sociosanitaria','Centro de día especializado exclusivamente en drogodependencias'], correct:3 },
+          { text:'Para acceder al "tipo 1" (personas mayores en situación de dependencia), ¿qué puntuación en el BVD (Baremo de Valoración de la Dependencia) se exige con carácter general?', options:['Puntuación superior a 39 puntos','Puntuación entre 25 y 39 puntos','Puntuación igual o inferior a 25 puntos','No se exige puntuación mínima, basta con tener 65 años'], correct:0 },
+          { text:'¿Cuál es el requisito de discapacidad o enfermedad para acceder al "tipo 2" del servicio (personas con discapacidad o enfermedad mental crónica)?', options:['Discapacidad reconocida en cualquier grado, sin porcentaje mínimo','Discapacidad superior al 60% o reconocimiento de dependencia; o diagnóstico de enfermedad mental crónica/trastorno mental grave y prolongado emitido por Osakidetza, o dependencia derivada de dicha enfermedad','Discapacidad igual o superior al 33%, como en el servicio ocupacional','Certificado de exclusión social emitido por Lanbide'], correct:1 },
+          { text:'¿En qué rango de edad se sitúa la población destinataria del "tipo 2", y qué excepción existe?', options:['65 años o más, sin excepciones','Entre 18 y 64 años, salvo en el subtipo "centros de autonomía personal", donde no hay límite de edad','Entre 3 y 18 años, sin excepciones','Sin límite de edad en ningún subtipo'], correct:1 },
+          { text:'¿Qué requisitos administrativos adicionales exige la ficha 2.2.1 para acceder al servicio?', options:['Empadronamiento de 12 meses continuados','Empadronamiento de 6 meses continuados','Ningún requisito administrativo adicional','Estar previamente valorado por Osakidetza con informe específico'], correct:2 },
+          { text:'Entre los requisitos de necesidad de la ficha 2.2.1 se incluye "no precisar una asistencia sanitaria especializada y/o permanente fuera del alcance de la red de servicios sociales". ¿Qué otro requisito de necesidad exige la ficha?', options:['Requerir un apoyo de baja intensidad para las actividades de la vida diaria','Requerir un apoyo de media o alta intensidad para realizar actividades de la vida diaria','Disponer de vehículo adaptado propio','Haber agotado previamente la prestación económica vinculada al servicio'], correct:1 },
+          { text:'¿Está sujeto a copago el servicio o centro de día del 2.2.1?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo si la persona usuaria supera los 39 puntos en el BVD','Solo para el subtipo de enfermedad mental crónica'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Compara los tres subtipos del servicio de centro de día para personas con discapacidad o enfermedad mental crónica (tipos 2, 3 y 4): a qué población se dirige cada uno y en cuál de ellos no se aplica límite de edad, razonando por qué.', puntos:['Subtipo a) Centros de autonomía personal: personas con graves limitaciones físicas u orgánicas — es el único subtipo sin límite de edad, porque este tipo de limitación no está ligada a un tramo etario concreto.','Subtipo b) Centro de día para discapacidad intelectual y del desarrollo: población de 18 a 64 años.','Subtipo c) Centro de día para enfermedad mental crónica, de naturaleza sociosanitaria: también de 18 a 64 años, con diagnóstico de Osakidetza.','En los subtipos b) y c) el límite 18-64 responde a que a partir de 65 años la persona pasaría a los recursos propios de personas mayores (tipo 1).'] } },
+    ]
+  },
+  {
+    id:'w2', range:'08/09 – 14/09', locked:false,
+    temas:[
+      { name:'2.2.2 Centro ocupacional', ficha:'Ficha 2.2.2', questions:[
+          { text:'¿Cuál es el objetivo general del servicio o centro ocupacional (2.2.2), según su ficha?', options:['Favorecer la participación activa de las personas con discapacidad y/o enfermedad mental en la vida social, mediante programas de desarrollo personal en torno a la actividad productiva, para favorecer su acceso al empleo cuando resulte posible','Ofrecer alojamiento residencial permanente','Sustituir al centro de día para limitaciones en la autonomía','Prestar exclusivamente formación reglada universitaria'], correct:0 },
+          { text:'¿Cuál de estos SÍ se apoya, favorece o promueve desde este servicio, según su ficha?', options:['La adquisición y mejora de habilidades adaptativas, ocupacionales y sociales necesarias para la autonomía personal y la integración sociolaboral','La contratación laboral indefinida garantizada','La exención total de cualquier valoración de seguimiento','El traslado obligatorio a un centro especial de empleo'], correct:0 },
+          { text:'¿Cómo se plantea este servicio dentro del itinerario de la persona usuaria, según su ficha?', options:['Únicamente como una etapa final e irreversible','Como un primer paso en el itinerario personal de inclusión laboral, o como alternativa definitiva para personas con graves dificultades de inclusión laboral','Como sustituto obligatorio de cualquier centro de día','Exclusivamente como medida sancionadora'], correct:1 },
+          { text:'¿Qué relación tienen las personas usuarias con el centro ocupacional, según su ficha?', options:['Una relación laboral ordinaria, con contrato y nómina','En ningún caso tendrán la consideración de personal laboral; no es una relación laboral','Una relación de voluntariado no remunerado en ningún caso','Una relación de tipo funcionarial'], correct:1 },
+          { text:'A pesar de no ser una relación laboral, ¿qué reciben las personas usuarias por su ocupación, según la ficha?', options:['Ninguna compensación de ningún tipo','Una gratificación económica','Un contrato indefinido automático','Puntos para acceder a una vivienda social'], correct:1 },
+          { text:'¿Con qué otros programas puede gestionarse de forma integrada este servicio, según su ficha?', options:['Con programas de empleo con apoyo en el mercado laboral ordinario y con programas de empleo protegido (centros especiales de empleo o empresas de inserción)','Únicamente con programas de ocio y tiempo libre','Con programas de vivienda social exclusivamente','Con ningún otro programa, actúa siempre de forma aislada'], correct:0 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.2.2?', options:['Valoración de seguimiento, intervención socioeducativa y psicosocial (estimulativa/rehabilitadora, ocupacional o pre-laboral), mediación-intermediación, acompañamiento social y transporte adaptado','Únicamente atención sociojurídica','Solo alojamiento de urgencia','Exclusivamente prestaciones económicas directas'], correct:0 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.2.2, en cuanto a "situación"?', options:['Personas con discapacidad de grado igual o superior al 33% y personas con enfermedad mental crónica que tengan ese grado o cuenten con diagnóstico de enfermedad mental crónica/trastorno mental grave y prolongado emitido por Osakidetza','Únicamente personas mayores de 65 años','Solo personas con discapacidad auditiva','Exclusivamente menores de edad'], correct:0 },
+          { text:'¿Entre qué edades se sitúa la población destinataria de este servicio?', options:['Entre 18 y 64 años','65 años o más','Entre 3 y 18 años','Sin límite de edad'], correct:0 },
+          { text:'¿A qué afecta específicamente el copago en la ficha 2.2.2, según su texto?', options:['A la totalidad del servicio, sin excepción','Únicamente a las prestaciones complementarias','Solo a la valoración de seguimiento','El servicio es enteramente gratuito, sin copago'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.2.2, explica qué relación tienen las personas usuarias con el centro ocupacional (¿es una relación laboral?) y qué reciben a cambio de su ocupación.', puntos:['Las personas usuarias no tendrán, en ningún caso, la consideración de personal laboral, de modo que la relación entre el servicio o centro y las personas usuarias no es una relación laboral.','Sin perjuicio de lo anterior, las personas usuarias reciben una gratificación económica por su ocupación.'] } },
+      { name:'2.2.3 Centro de día — inclusión social', ficha:'Ficha 2.2.3', questions:[
+          { text:'¿A quién ofrece este servicio un lugar en el que pasar el día, según su ficha?', options:['A personas en situación de exclusión social asentadas en el Territorio Histórico','Únicamente a personas mayores de 65 años','Solo a personas con discapacidad reconocida','Exclusivamente a menores de edad'], correct:0 },
+          { text:'¿Qué carácter tiene el servicio orientado a la incorporación social que ofrece esta ficha?', options:['Carácter polivalente, con atención prolongada en el tiempo, procurando que la persona no se desligue de su entorno habitual','Carácter exclusivamente médico-sanitario','Carácter estrictamente puntual, de una sola sesión','Carácter punitivo y sancionador'], correct:0 },
+          { text:'¿Qué tipo de intervenciones conjuga este servicio, desde un enfoque integral, según la ficha?', options:['Intervenciones de carácter ocupacional, educativas, terapéuticas y de inclusión sociolaboral','Únicamente intervenciones médicas','Solo intervenciones jurídicas','Exclusivamente intervenciones deportivas'], correct:0 },
+          { text:'¿Cómo describe la ficha a los equipamientos de este servicio?', options:['Equipamientos de proximidad, flexibles y abiertos durante un amplio abanico de horas de atención diurna','Equipamientos cerrados, de acceso restringido a una hora fija diaria','Equipamientos exclusivamente rurales','Equipamientos de estancia permanente, sin horario diurno'], correct:0 },
+          { text:'¿Qué nivel de intensidad y exigencia tiene este servicio, según su ficha?', options:['Es un servicio de media y alta intensidad de apoyo, y de baja, media o alta exigencia según el caso','Únicamente de baja intensidad, sin excepción','Exclusivamente de alta exigencia, sin gradación','No se define ningún nivel de intensidad ni exigencia'], correct:0 },
+          { text:'¿A qué se compromete la persona usuaria mientras utiliza este servicio, según la ficha?', options:['A no salir del centro en ningún caso','A realizar las acciones que se definan en su PAP (Plan de Atención Personalizada) y en su programación individual','A renunciar a cualquier otra prestación del SVSS','A pagar la totalidad del coste del servicio, sin copago posible'], correct:1 },
+          { text:'¿Cuáles son las prestaciones complementarias que recoge la ficha 2.2.3?', options:['Manutención, limpieza, consigna, higiene personal y lavandería','Únicamente transporte adaptado','Solo seguridad (vigilancia)','Exclusivamente formación reglada'], correct:0 },
+          { text:'¿Entre qué edades se sitúa la población destinataria de este servicio?', options:['Entre 18 y 64 años','65 años o más','Entre 3 y 18 años','Sin límite de edad'], correct:0 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.2.3?', options:['Ningún requisito adicional','Permanecer empadronada/o durante 6 meses inmediatamente anteriores a la fecha de solicitud en cualquier municipio de la CAPV','Empadronamiento de 12 meses','Informe judicial previo'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué exige la ficha respecto a la conciencia de la propia situación?', options:['No se exige ninguna conciencia de la situación','Tener conciencia de su situación y motivación por cambiarla','Haber sido diagnosticada judicialmente como persona en riesgo','Contar con el respaldo económico de un familiar'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.2.3, explica qué compromiso se exige a las personas usuarias mientras utilizan el servicio y qué tipo de equipamiento es este centro de día.', puntos:['Compromiso: realizar las acciones que se definan en su PAP (Plan de Atención Personalizada) y en su programación individual.','Tipo de equipamiento: de proximidad, flexible, abierto durante un amplio abanico de horas de atención diurna, de media y alta intensidad de apoyo, y de baja, media o alta exigencia según el caso.'] } },
+    ]
+  },
+  {
+    id:'w3', range:'15/09 – 21/09', locked:false,
+    temas:[
+      { name:'2.3.1 Centro de noche — autonomía', ficha:'Ficha 2.3.1', questions:[
+          { text:'¿Cómo define su ficha el centro de noche para atender necesidades derivadas de limitaciones en la autonomía (2.3.1)?', options:['Un recurso de atención a personas dependientes que, por diversas causas (en particular de origen psíquico o neurológico), necesitan supervisión de media o alta intensidad en horario nocturno para el control y regulación del sueño y del comportamiento nocturno','Un servicio exclusivamente diurno sin pernocta','Un centro penitenciario de baja seguridad','Un servicio de transporte nocturno'], correct:0 },
+          { text:'¿Cuál es el objetivo de este servicio respecto a las familias, según su ficha?', options:['Sustituir por completo a la familia en todas sus funciones','Apoyar a las familias para mejorar su capacidad de proporcionar un cuidado adecuado, incidiendo positivamente en la dinámica intrafamiliar afectada por el estrés de los cuidados continuados','Separar de forma permanente a la persona cuidada de su familia','Trasladar automáticamente a la persona a un centro residencial'], correct:1 },
+          { text:'¿Dónde puede prestarse este servicio, según la ficha?', options:['Únicamente en un hospital','En un centro de noche (integrado o no en un equipamiento residencial) o como servicio de atención nocturna en el marco de un servicio residencial de las fichas 2.4.1, 2.4.2 y 2.4.3','Solo en el domicilio de un familiar distinto al habitual','Exclusivamente en dependencias policiales'], correct:1 },
+          { text:'¿Qué dos tipos de servicios distingue la ficha 2.3.1?', options:['Centro o servicio de noche para personas mayores, y centro o servicio de noche para personas con discapacidad','Centro de noche urbano y centro de noche rural','Servicio de pago y servicio gratuito','Servicio permanente y servicio de urgencia'], correct:0 },
+          { text:'¿Cuáles son las prestaciones complementarias de la ficha 2.3.1?', options:['Pernocta, manutención (cena y/o desayuno) y limpieza','Únicamente transporte adaptado','Solo lavandería','Exclusivamente seguridad (vigilancia)'], correct:0 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas en situación de dependencia','Únicamente personas sin ningún diagnóstico','Solo personas en situación de exclusión social','Exclusivamente menores de edad'], correct:0 },
+          { text:'¿Qué edad se exige en la modalidad 1 (personas mayores) y en la modalidad 2 (personas con discapacidad)?', options:['65 años o más en la modalidad 1; 18 años o más en la modalidad 2','18 años o más en ambas modalidades, sin distinción','Sin límite de edad en ninguna de las dos modalidades','21 años o más en ambas modalidades'], correct:0 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.3.1?', options:['Empadronamiento de 12 meses','Ningún requisito adicional','Empadronamiento de 6 meses','Informe médico-forense'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué tipo de supervisión debe requerir la persona usuaria?', options:['Una supervisión de media o alta intensidad durante la noche, para el control y la regulación del ritmo del sueño y del comportamiento nocturno','Una supervisión exclusivamente diurna','Ninguna supervisión especial','Una supervisión únicamente los fines de semana'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de la ficha 2.3.1?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo en la modalidad 2','Solo si se usa más de 10 noches al mes'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.3.1, explica el objetivo de este servicio respecto a las familias cuidadoras y en qué dos contextos (dónde) puede prestarse.', puntos:['Objetivo respecto a las familias: apoyarlas para mejorar su capacidad de proporcionar un cuidado adecuado, incidiendo positivamente en la dinámica intrafamiliar, a menudo afectada por el estrés de los cuidados continuados.','Dónde puede prestarse: en un centro de noche (integrado o no en un equipamiento residencial), o como servicio de atención nocturna en el marco de un servicio residencial de las fichas 2.4.1, 2.4.2 o 2.4.3.'] } },
+      { name:'2.3.2 Acogida nocturna — inclusión social', ficha:'Ficha 2.3.2', questions:[
+          { text:'¿A quién se dirige el centro de acogida nocturna para atender necesidades de inclusión social (2.3.2), según su ficha?', options:['A personas en situación de exclusión social que requieren un lugar en el que pasar la noche y cubrir necesidades básicas, pero no pueden ser atendidas en los servicios de acogida nocturna de atención primaria por sus especiales necesidades o circunstancias','A cualquier persona que quiera alojamiento turístico económico','Únicamente a personas mayores dependientes','Solo a menores de edad en acogimiento residencial'], correct:0 },
+          { text:'¿Cuáles son, en particular, las circunstancias especiales que menciona la ficha para justificar el acceso a este servicio en vez de al de atención primaria?', options:['Trastornos de conducta, alta hospitalaria reciente que requiera apoyo en la convalecencia, o síndrome de abstinencia','Tener más de 3 hijos/as a cargo','Ser propietario de una vivienda','Tener estudios universitarios'], correct:0 },
+          { text:'¿Qué tipo de intervenciones pueden ofrecerse con flexibilidad en este servicio, según la ficha?', options:['Intervenciones socioeducativas y psicosociales básicas que contribuyan a evitar un mayor deterioro y constituyan un primer paso hacia un itinerario de inclusión social','Intervenciones quirúrgicas de urgencia','Intervenciones exclusivamente jurídico-penales','Intervenciones de asesoramiento fiscal'], correct:0 },
+          { text:'¿Cómo califica la ficha a este servicio en cuanto a exigencia e intensidad de apoyo?', options:['Servicios de baja exigencia, y de media y alta intensidad de apoyo, en atención a las especiales necesidades o circunstancias de las personas atendidas','Servicios de alta exigencia y baja intensidad, sin excepción','Servicios sin ninguna graduación de exigencia ni intensidad','Servicios exclusivamente de acceso restringido a personas con empleo'], correct:0 },
+          { text:'¿En qué marco puede prestarse este servicio, según su ficha?', options:['En un centro de noche (integrado o no en equipamiento residencial), o como servicio de atención nocturna en el marco de un servicio residencial de la ficha 2.4.5 y, en su caso, la 2.4.4','Únicamente en dependencias municipales','Solo en centros de salud mental','Exclusivamente en pisos de alquiler privado'], correct:0 },
+          { text:'¿Qué prestación "De Salud" específica recoge esta ficha?', options:['Cirugía ambulatoria','Servicio de intercambio de jeringuillas para personas con problemas de drogodependencia','Atención odontológica','Vacunación infantil'], correct:1 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas en situación de exclusión','Únicamente personas con discapacidad física','Solo personas mayores de 65 años','Exclusivamente familias con menores a cargo'], correct:0 },
+          { text:'¿A partir de qué edad se dirige este servicio?', options:['16 años o más','18 años o más','21 años o más','Sin límite de edad'], correct:1 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.3.2 para el acceso?', options:['Empadronamiento de 6 meses','No se exigirá ningún requisito, al margen de la prescripción técnica, accediéndose al servicio de modo directo','Empadronamiento de 12 meses','Autorización judicial previa'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué debe justificar la persona para acceder a este servicio en lugar del de atención primaria?', options:['Necesitar un lugar en el que pasar la noche, y presentar necesidades o circunstancias que impidan o dificulten su atención en un servicio de acogida nocturna de atención primaria','Tener antecedentes penales','Haber sido expulsada de otro centro por impago','No hablar euskera'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.3.2, explica en qué se diferencia este servicio del servicio de acogida nocturna de atención primaria (ficha 1.8), y en qué marco residencial puede prestarse.', puntos:['Diferencia: la ficha 2.3.2 atiende a personas en situación de exclusión que, por sus especiales necesidades o circunstancias (trastornos de conducta, alta hospitalaria reciente que requiera apoyo en la convalecencia, o síndrome de abstinencia), no pueden ser atendidas en los servicios de acogida nocturna de atención primaria.','Marco de prestación: puede prestarse en un centro de noche (integrado o no en un equipamiento residencial), o como servicio de atención nocturna en el marco de un servicio residencial de la ficha 2.4.5 y, en su caso, de la ficha 2.4.4.'] } },
+    ]
+  },
+  // El resto del cronograma completo (hasta enero y más allá) se representa aquí solo
+  // como vista previa del alcance — se rellenará con el mismo formato tras tu confirmación.
+  {
+    id:'w4', range:'22/09 – 28/09', locked:false,
+    temas:[
+      { name:'2.4.1 Residencial mayores', ficha:'Ficha 2.4.1', questions:[
+          { text:'Según su ficha, ¿a qué grado de dependencia se dirigen, con carácter general, los centros residenciales para personas mayores (2.4.1)?', options:['Grado I únicamente','Grados II y III, y excepcionalmente Grado I','Cualquier grado, sin distinción','Solo a personas sin dependencia reconocida pero en riesgo'], correct:1 },
+          { text:'Al ser centros de alta intensidad, ¿qué garantizan según su ficha?', options:['Solo transporte adaptado y manutención','Presencia permanente (24h) de personal cuidador, servicio médico y de enfermería, y apoyo de un equipo multidisciplinar','Únicamente actividades de ocio y tiempo libre','Alojamiento exclusivamente nocturno'], correct:1 },
+          { text:'¿Cuándo adquiere un centro (o alguna de sus unidades) naturaleza sociosanitaria, según la ficha 2.4.1?', options:['Cuando el centro tiene más de 50 plazas','Cuando se destina a personas mayores que precisan una atención sanitaria y social intensa, simultánea, coordinada y estable','Cuando está ubicado en un municipio de más de 20.000 habitantes','Nunca; la naturaleza sociosanitaria no se contempla en esta ficha'], correct:1 },
+          { text:'¿Cuál de los siguientes NO figura entre los objetivos que enumera la ficha 2.4.1?', options:['Garantizar los cuidados y la asistencia personal necesaria para las actividades de la vida diaria','Que las personas usuarias mantengan y amplíen las relaciones con la familia y otras personas','Favorecer su sentimiento de seguridad','Garantizar la reinserción laboral de las personas usuarias'], correct:3 },
+          { text:'¿Cuál de estas prestaciones NO aparece entre las "Prestaciones de Servicios Sociales" de la ficha 2.4.1?', options:['Información','Atención personal','Transporte adaptado','Mediación – Intermediación'], correct:2 },
+          { text:'Para mantener la unidad convivencial, ¿quién puede acceder excepcionalmente al centro junto con la persona destinataria, según su ficha?', options:['Cualquier vecino o vecina del mismo edificio','Su cónyuge o pareja de hecho con convivencia habitual, o quien tenga parentesco hasta el 2º grado de consanguinidad o afinidad y conviva habitualmente con ella','Únicamente sus hijos e hijas menores de edad','Nadie; el ingreso es siempre estrictamente individual'], correct:1 },
+          { text:'¿Qué límite de edad establece la ficha 2.4.1, y a quién no se le aplica?', options:['65 años o más; no se aplica al cónyuge o familiar que ingrese como acompañante','60 años o más, sin excepciones','No hay límite de edad en ningún caso','65 años o más, incluido el acompañante'], correct:0 },
+          { text:'Entre los requisitos de necesidad de la ficha 2.4.1, ¿qué se exige en las estancias temporales?', options:['Haber agotado antes una plaza de centro de día','Ser una persona que precise una alternativa residencial temporal por imposibilidad o grave dificultad de recibir el debido cuidado en su convivencia habitual, o para que la persona cuidadora disfrute de respiro','Tener más de 80 años','Disponer de informe favorable de dos facultativos distintos'], correct:1 },
+          { text:'Cuando la estancia temporal responde a una necesidad sociosanitaria o está muy asociada a un problema de salud, ¿qué exige la ficha respecto al reconocimiento de dependencia?', options:['Se exige siempre el reconocimiento previo de dependencia, sin excepción','No se exige el reconocimiento previo, si bien debe existir de hecho una situación temporal de dependencia que se acredite posteriormente','Se exige un grado de dependencia III como mínimo','El reconocimiento de dependencia deja de ser necesario definitivamente'], correct:1 },
+          { text:'¿Está sujeto a copago el servicio de la ficha 2.4.1?', options:['No, es gratuito','Sí, el servicio está sujeto a copago','Solo en el caso de los acompañantes','Solo cuando el centro tiene naturaleza sociosanitaria'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.1: ¿en qué consiste la naturaleza sociosanitaria de un centro residencial para personas mayores, y en qué supuesto puede accederse a una estancia temporal sin contar previamente con el reconocimiento de dependencia?', puntos:['Naturaleza sociosanitaria: cuando el centro o alguna de sus unidades se destina a personas mayores que precisan una atención sanitaria y social intensa, simultánea, coordinada y estable.','Estancia temporal sin reconocimiento previo: cuando la estancia responde a una necesidad sociosanitaria o está muy directamente asociada a un problema de salud.','En ese caso no se exige el reconocimiento de dependencia para el acceso, pero debe existir de hecho una situación temporal de dependencia, que se acreditará posteriormente.'] } },
+      { name:'2.4.2 Residencial discapacidad', ficha:'Ficha 2.4.2', questions:[
+          { text:'¿A qué población dirige, con carácter general, la ficha 2.4.2 (centros residenciales para personas con discapacidad)?', options:['A personas con discapacidad con reconocimiento de dependencia','A cualquier persona con discapacidad, tenga o no reconocida la dependencia','Únicamente a personas con discapacidad intelectual','A personas con discapacidad mayores de 65 años'], correct:0 },
+          { text:'¿Qué niveles de apoyo garantiza este servicio, según su ficha?', options:['Solo apoyo generalizado, sin gradación','Apoyo intermitente, limitado, extenso y generalizado, de carácter individualizado','Únicamente apoyo de baja intensidad','Apoyo exclusivamente nocturno'], correct:1 },
+          { text:'¿Qué dos tipos de servicios distingue la ficha 2.4.2?', options:['Centros de día y centros de noche','Viviendas con apoyos, y centros residenciales','Pisos de acogida y centros de emancipación','Residencias y centros ocupacionales'], correct:1 },
+          { text:'Según la ficha, ¿en qué tipo de servicio se ofrecen las prestaciones de salud (atención de enfermería, médica y rehabilitación)?', options:['En el tipo 1 (viviendas con apoyos), exclusivamente','En el tipo 2 (centros residenciales)','En ambos tipos por igual, sin distinción','En ninguno, esas prestaciones no están previstas en esta ficha'], correct:1 },
+          { text:'¿Entre qué edades se sitúa, con carácter general, la población destinataria de la ficha 2.4.2?', options:['Entre 18 y 64 años en el momento del acceso','Entre 3 y 18 años','65 años o más','Sin límite de edad en ningún caso'], correct:0 },
+          { text:'¿En qué supuestos puede acceder excepcionalmente una persona menor de edad a este servicio, según su ficha?', options:['Nunca puede acceder una persona menor de edad','Cuando sus necesidades o la gravedad de la situación sociofamiliar lo aconseje, o en riesgo grave de desprotección/desamparo cuando los dispositivos específicos no garanticen la atención adecuada','Solo si lo autoriza expresamente el Gobierno Vasco','Solo cuando el centro tenga naturaleza sociosanitaria'], correct:1 },
+          { text:'Cuando accede excepcionalmente una persona menor de edad, ¿qué exige la ficha para garantizar que el uso sea excepcional?', options:['Que la familia renuncie a la patria potestad','Que la mayor adecuación de este servicio, en cualquiera de sus modalidades, quede motivada','Que medie sentencia judicial firme','Nada en especial, no se exige justificación adicional'], correct:1 },
+          { text:'¿Qué requisitos administrativos adicionales exige la ficha 2.4.2?', options:['Empadronamiento de 12 meses','Empadronamiento de 6 meses','Ningún requisito administrativo adicional','Informe de Osakidetza actualizado'], correct:2 },
+          { text:'Entre los requisitos de necesidad, ¿qué matiz distingue a la ficha 2.4.2 de la 2.4.1 respecto al rechazo de tratamiento?', options:['La 2.4.2 exige no rechazar tratamiento solo en caso de enfermedad infecto-contagiosa (no menciona enfermedad mental, a diferencia de la 2.4.1)','Ambas exigen exactamente lo mismo, sin diferencia alguna','La 2.4.2 no exige nada respecto al rechazo de tratamiento','La 2.4.2 exige además vacunación completa'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de la ficha 2.4.2?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo el tipo 2 (centros residenciales)','Solo cuando accede una persona menor de edad'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.2, explica los dos supuestos excepcionales en los que una persona menor de edad puede acceder a un centro residencial para personas con discapacidad, y qué exige la ficha en ambos casos para garantizar el carácter excepcional del acceso.', puntos:['Supuesto a) cuando sus necesidades o la gravedad de la situación sociofamiliar lo aconseje.','Supuesto b) en casos de riesgo grave de desprotección o desamparo, cuando los dispositivos de protección específicamente destinados a esas situaciones no puedan garantizar la atención adecuada.','En ambos casos, la mayor adecuación de este servicio, en cualquiera de sus modalidades, debe motivarse expresamente para garantizar su uso excepcional.'] } },
+    ]
+  },
+  {
+    id:'w5', range:'29/09 – 05/10', locked:false,
+    temas:[
+      { name:'2.4.3 Residencial enfermedad mental', ficha:'Ficha 2.4.3', questions:[
+          { text:'¿Cómo define su ficha a los centros o servicios de la ficha 2.4.3?', options:['Centros de atención diurna sin pernocta','Centros o servicios de carácter sociosanitario que atienden a personas con enfermedad mental crónica','Centros exclusivamente sanitarios, ajenos al sistema de servicios sociales','Centros de acogida nocturna de baja exigencia'], correct:1 },
+          { text:'Según la ficha, ¿a qué personas atienden estos centros?', options:['A cualquier persona con un diagnóstico psiquiátrico, sin más condición','A personas con enfermedad mental que no pueden satisfacer adecuadamente sus necesidades en su entorno habitual y que no requieren la intensidad de apoyos propia de otros sistemas de atención','Únicamente a personas en crisis psiquiátrica aguda','Solo a personas con enfermedad mental menores de 18 años'], correct:1 },
+          { text:'¿Qué niveles de apoyo garantiza este servicio, según su ficha?', options:['Solo apoyo generalizado','Apoyo intermitente, limitado, extenso y generalizado, de carácter individualizado','Apoyo exclusivamente puntual, sin continuidad','Apoyo únicamente en horario diurno'], correct:1 },
+          { text:'¿Qué tipos de estancia contempla la ficha 2.4.3?', options:['Solo estancia permanente','Estancia temporal, larga estancia o estancia permanente','Solo estancias de fin de semana','Estancias limitadas a un máximo de 30 días'], correct:1 },
+          { text:'¿Cuál es la diferencia entre los dos tipos de servicio de la ficha 2.4.3?', options:['El tipo 1 (viviendas con apoyos) no requiere supervisión continua, con personal cuidador solo mientras hay personas usuarias presentes; el tipo 2 (centros residenciales) atiende a quienes requieren supervisión continua, con personal cuidador permanente','Ambos tipos son idénticos en cuanto a supervisión','El tipo 1 es exclusivamente para menores de edad','El tipo 2 no cuenta con personal cuidador'], correct:0 },
+          { text:'¿Qué naturaleza tienen, según la ficha, ambos tipos de servicio (viviendas con apoyos y centros residenciales)?', options:['Naturaleza puramente educativa','Naturaleza sociosanitaria','Naturaleza exclusivamente asistencial-hotelera','Naturaleza penitenciaria'], correct:1 },
+          { text:'¿Cuál es la población destinataria general de la ficha 2.4.3, en cuanto a "situación"?', options:['Personas con cualquier discapacidad, sin más requisito','Personas con diagnóstico de enfermedad mental crónica o de trastorno mental grave y prolongado, emitido por Osakidetza, y con reconocimiento de dependencia derivado de dicha enfermedad','Personas mayores de 65 años con cualquier patología','Personas en situación de exclusión social sin diagnóstico específico'], correct:1 },
+          { text:'¿En qué edad se sitúa, con carácter general, la población destinataria, y qué excepción existe?', options:['18 años o más, salvo excepción por necesidades o riesgo grave de desprotección/desamparo en personas menores de edad, debidamente motivada','65 años o más, sin excepciones','Entre 3 y 18 años exclusivamente','No hay límite de edad en ningún caso'], correct:0 },
+          { text:'Entre los requisitos de necesidad, ¿qué exige la ficha 2.4.3 respecto al estado psicopatológico de la persona?', options:['Encontrarse en fase aguda de crisis psiquiátrica','Presentar una situación psicopatológica estabilizada y no encontrarse en situación de crisis psiquiátrica','No tener ningún diagnóstico psiquiátrico previo','Estar hospitalizada en el momento de la solicitud'], correct:1 },
+          { text:'¿Está sujeto a copago el servicio de la ficha 2.4.3?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo el tipo 2 (centros residenciales)','Solo cuando la persona sea menor de edad'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.3, explica la diferencia entre los dos tipos de servicio (viviendas con apoyos y centros residenciales) en cuanto a supervisión y personal cuidador, y en qué consiste el requisito de necesidad relativo a la situación psicopatológica de la persona usuaria.', puntos:['Viviendas con apoyos (tipo 1): personas que no requieren supervisión continua, en proceso de inclusión, con actividades formativas fuera del servicio durante el día; personal cuidador solo durante las horas en que hay personas usuarias presentes.','Centros residenciales (tipo 2): personas que requieren supervisión continua y/o ayuda para actividades de la vida diaria; personal cuidador de forma permanente.','Requisito psicopatológico: presentar una situación estabilizada y no encontrarse en crisis psiquiátrica.'] } },
+      { name:'2.4.4 Residencial menores desprotección', ficha:'Ficha 2.4.4', questions:[
+          { text:'¿Cómo define su ficha el acogimiento residencial que ofrecen estos centros?', options:['Como una medida alternativa de guarda, de carácter administrativo o judicial','Como un servicio puramente hotelero sin carácter de protección','Como una medida penal impuesta por el juez de menores','Como un servicio exclusivamente sanitario'], correct:0 },
+          { text:'¿Cuál es el objetivo básico de este servicio, según su ficha?', options:['Sustituir permanentemente a la familia biológica en todos los casos','Ofrecer a la persona usuaria un espacio de protección que le permita un adecuado desarrollo afectivo, psicológico, intelectual y social','Preparar exclusivamente la adopción internacional','Ofrecer alojamiento sin ningún tipo de intervención socioeducativa'], correct:1 },
+          { text:'¿Hacia qué se orienta habitualmente el acogimiento residencial, dado su carácter temporal, según la ficha?', options:['Hacia el retorno a la familia biológica o hacia medidas alternativas como el acogimiento familiar o la adopción','Hacia la permanencia indefinida en el centro','Hacia el traslado automático a un centro penitenciario de menores','Hacia la emancipación inmediata a los 16 años'], correct:0 },
+          { text:'¿Cuáles son los cuatro tipos de servicios que distingue la ficha 2.4.4?', options:['Residencias, pisos de acogida, centros de preparación a la emancipación y pisos de emancipación','Centros de día, centros de noche, residencias y pisos tutelados','Guarderías, colegios, residencias y centros de menores infractores','Solo un tipo único: residencias generales'], correct:0 },
+          { text:'¿Cuál de los siguientes NO es uno de los programas que recoge la ficha 2.4.4?', options:['Acogida de urgencias','De preparación a la emancipación','Especializado de apoyo intensivo a adolescentes con graves problemas de conducta','De reinserción laboral para personas adultas'], correct:3 },
+          { text:'¿Cuáles son las tres situaciones que definen la población destinataria según la ficha 2.4.4?', options:['a) Imposibilidad temporal de cuidado por el padre, madre o tutor/a debido a circunstancias graves; b) riesgo grave de desprotección; c) desamparo','a) Pobreza económica; b) desempleo de los progenitores; c) enfermedad crónica del menor','a) Fracaso escolar; b) conflictos vecinales; c) mudanza reciente','a) Solicitud voluntaria de los propios progenitores sin causa objetivada; b) sobrepoblación en el domicilio; c) preferencia personal del menor'], correct:0 },
+          { text:'¿A qué edad se dirige, con carácter general, la ficha 2.4.4, y qué excepción contempla para personas ya mayores de edad?', options:['A personas menores de edad; excepcionalmente, jóvenes de 18 años o más pueden continuar en programa de emancipación hasta un máximo de 18 meses si ya residían en un recurso de protección antes de su mayoría de edad','Únicamente a personas de 0 a 6 años','A personas de cualquier edad, sin distinción','A personas de 18 a 25 años exclusivamente'], correct:0 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.4.4 para acceder al servicio?', options:['Ningún requisito administrativo adicional','Ser objeto de una medida administrativa o judicial de acogimiento residencial, en el marco de la tutela o de la asunción de la guarda por la Diputación Foral','Estar empadronado/a durante 12 meses continuados','Contar con autorización expresa del centro escolar'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué exige la ficha respecto a medidas judiciales de responsabilidad penal?', options:['Que la persona menor esté siempre sujeta a una medida penal de internamiento','No estar sujeta la persona menor a medidas judiciales de responsabilidad penal que consistan en internamiento, ni a una medida de convivencia con un grupo educativo (salvo que ya conviviera con él antes de la sentencia)','Que la persona menor haya cometido previamente una infracción penal','Que exista una condena penal firme contra los progenitores'], correct:1 },
+          { text:'¿Cuál de estas prestaciones de la ficha 2.4.4 se ofrece específicamente "cuando atienden a niños/as de corta edad"?', options:['Mediación-intermediación','Atención personal','Acompañamiento social: acción tutorial','Intervención socioeducativa'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.4, explica las tres situaciones que definen la población destinataria del servicio, y detalla el límite de edad general junto con la excepción prevista para personas jóvenes ya mayores de edad.', puntos:['a) Imposibilidad temporal del padre, la madre o el/la tutor/a de cuidar a la persona menor debido a circunstancias graves.','b) Situaciones de riesgo grave de desprotección.','c) Situaciones de desamparo.','Edad general: personas menores de edad. Excepción: jóvenes de 18 años o más pueden ser usuarias, en programa de emancipación y por un máximo de 18 meses, si ya residían en un recurso de la red de protección antes de alcanzar la mayoría de edad, previo acuerdo con la Diputación Foral.'] } },
+    ]
+  },
+  {
+    id:'w6', range:'06/10 – 12/10', locked:false,
+    temas:[
+      { name:'2.4.5 Residencial exclusión', ficha:'Ficha 2.4.5', questions:[
+          { text:'¿Cómo define su ficha a los centros residenciales para personas en situación de exclusión y marginación (2.4.5)?', options:['Centros sanitarios de ingreso hospitalario breve','Centros de convivencia que ofrecen a personas en situación de exclusión con graves deterioros de carácter personal, social y relacional, un alojamiento con apoyos de media o alta intensidad, para intervenciones orientadas a la inclusión social','Centros exclusivamente de atención diurna, sin alojamiento','Centros destinados únicamente a personas mayores sin recursos'], correct:1 },
+          { text:'¿Cuál de los siguientes NO figura entre los objetivos que enumera la ficha 2.4.5?', options:['Mantener la autonomía personal de las personas usuarias y, en lo posible, fomentar su desarrollo','Potenciar su desarrollo personal, capacidades, habilidades y experiencias','Promover el mantenimiento y refuerzo de sus redes familiares y sociales de apoyo','Garantizar la reagrupación familiar en el país de origen'], correct:3 },
+          { text:'¿Qué distingue al "tipo 1" de servicios de la ficha 2.4.5?', options:['Está pensado para personas con una situación cronificada y un deterioro personal que precisan un servicio de larga estancia, con un enfoque que combine inclusión social y un ritmo de intervención pausado','Es exclusivamente de urgencia, con estancia máxima de 48 horas','Solo admite a menores de edad','No cuenta con equipo multidisciplinar'], correct:0 },
+          { text:'Dentro del "tipo 2" (servicios residenciales para la inclusión social), ¿qué diferencia a los subtipos 2.1 y 2.2?', options:['El 2.1 son viviendas con apoyos para personas con carencias psicosociales que requieren apoyo psicosocial de intensidad media; el 2.2 son centros residenciales para personas con carencias psicosociales graves y/o sin hogar, que requieren apoyo psicosocial de alta intensidad','No hay ninguna diferencia real entre ambos subtipos','El 2.1 es solo para mujeres y el 2.2 solo para hombres','El 2.2 es exclusivamente para personas menores de edad'], correct:0 },
+          { text:'¿En qué modalidad se ofrece específicamente la intervención socioeducativa y psicosocial (estimulativa, ocupacional, educativa y psicosocial), según la ficha 2.4.5?', options:['En la modalidad 1, exclusivamente','En la modalidad 2','En ninguna de las dos modalidades','En ambas por igual, sin distinción'], correct:1 },
+          { text:'¿Cuáles son las prestaciones complementarias que recoge la ficha 2.4.5?', options:['Solo manutención','Manutención, lavandería, limpieza y seguridad (vigilancia), en su caso','Transporte adaptado exclusivamente','Ninguna prestación complementaria'], correct:1 },
+          { text:'¿A partir de qué edad se dirige, con carácter general, este servicio?', options:['16 años o más','18 años o más','21 años o más','65 años o más'], correct:1 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.4.5 para el acceso?', options:['Ningún requisito administrativo','Permanecer empadronada/o durante 6 meses inmediatamente anteriores a la fecha de solicitud en cualquier municipio de la CAPV','Empadronamiento de 12 meses continuados en el mismo municipio','Contar con informe de Osakidetza'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿a qué debe comprometerse la persona usuaria mientras utiliza el servicio?', options:['A no salir del centro bajo ninguna circunstancia','A realizar un itinerario de inclusión social y sociolaboral u ocupacional, y mantenerse realizándolo mientras se utiliza el servicio','A abonar la totalidad del coste del servicio sin copago','A renunciar a cualquier otra prestación del SVSS'], correct:1 },
+          { text:'Para mantener la unidad convivencial, ¿quién puede acceder junto a la persona solicitante, según la ficha 2.4.5, y qué excepción se contempla?', options:['Cualquier persona, sin excepción alguna','Su cónyuge o pareja de hecho con convivencia habitual (salvo que la solicitante sea mujer víctima de maltrato), las personas menores a su cargo, y las personas adultas bajo su tutela o en riesgo/situación de dependencia que convivan habitualmente con ella','Únicamente sus padres o madres','Solo personas con las que no tenga ningún vínculo familiar'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.5, explica la diferencia entre el tipo 1 y el tipo 2 de servicios residenciales para exclusión y marginación, y dentro del tipo 2, la diferencia entre sus dos subtipos (2.1 y 2.2).', puntos:['Tipo 1: personas con situación cronificada y deterioro personal, servicio de larga estancia, ritmo de intervención pausado, con visión de inclusión social.','Tipo 2: servicios residenciales para la inclusión social, de media o larga estancia, orientados a mejorar capacidades y habilidades para la reinserción y el acceso progresivo a un modo de vida normalizado.','Subtipo 2.1 (viviendas con apoyos): personas con carencias psicosociales que requieren apoyo psicosocial de intensidad media, para posibilitar la vida en el contexto comunitario.','Subtipo 2.2 (centros residenciales para la inclusión social): personas con carencias psicosociales graves y/o sin hogar, que requieren apoyo psicosocial de alta intensidad, incluida la transición a una vivienda estable.'] } },
+      { name:'2.4.6 Residencial mujeres víctimas', ficha:'Ficha 2.4.6', questions:[
+          { text:'¿Cómo describe su ficha a los centros de la ficha 2.4.6?', options:['Centros que, en unos casos, ofrecen atención y alojamiento de urgencia y corta estancia, y en otros, de media estancia, a mujeres con graves conflictos convivenciales y a otras mujeres en desprotección y/o exclusión','Centros exclusivamente de terapia grupal sin alojamiento','Centros destinados únicamente a hombres agresores en programas de reeducación','Centros de estancia permanente sin límite temporal'], correct:0 },
+          { text:'¿Qué dos momentos de intervención distingue la ficha 2.4.6?', options:['Solo un momento único, sin distinción de fases','a) Primera acogida durante 24h (valoración, diagnóstico, orientación, alojamiento de urgencia); b) posteriores a la primera acogida, con alojamiento y apoyos intensivos que requieren presencia permanente de personal técnico especializado','Fase judicial y fase administrativa, exclusivamente','Fase de diagnóstico médico y fase de alta hospitalaria'], correct:1 },
+          { text:'¿Desde qué perspectiva y enfoque se realizan las intervenciones socioeducativas y psicosociales de este servicio, según su ficha?', options:['Desde una perspectiva exclusivamente jurídico-penal','Desde la perspectiva de género, con un enfoque que apoye el empoderamiento de las mujeres','Desde una perspectiva puramente asistencial-hotelera','Desde la perspectiva exclusivamente sanitaria'], correct:1 },
+          { text:'¿Qué caracteriza al "tipo 1" de servicios de la ficha 2.4.6?', options:['Servicios de acogida inmediata, de corta estancia, accesibles 24 horas al día, todos los días del año, durante el periodo necesario para valorar las necesidades antes de derivar al recurso más idóneo','Servicios exclusivamente telefónicos, sin alojamiento','Centros de media estancia únicamente para mujeres embarazadas','Un servicio de acceso exclusivamente por derivación judicial firme'], correct:0 },
+          { text:'¿A qué mujeres atienden los centros de acogida de media estancia (tipo 2), según la ficha?', options:['Únicamente a mujeres mayores de 65 años','A mujeres y sus hijos/as menores víctimas de maltrato doméstico que precisen intervención especializada integral, y a mujeres solas en gestación o con hijos/as menores a cargo en riesgo grave de desprotección/exclusión, sin recursos ni apoyo sociofamiliar','Solo a mujeres sin hijos/as a cargo','A cualquier persona en situación de exclusión social, sin distinción de sexo'], correct:1 },
+          { text:'¿Cuál de estas prestaciones se ofrece, según la ficha, específicamente "en el primer tipo"?', options:['Atención sociojurídica, exclusivamente','Valoración inicial de necesidades','Seguridad (vigilancia), exclusivamente','Mediación-Intermediación, exclusivamente'], correct:1 },
+          { text:'Para mantener la unidad convivencial, ¿quién puede acceder junto a las mujeres destinatarias del servicio, según la ficha?', options:['Nadie más puede acceder bajo ninguna circunstancia','Las personas que dependan de ellas y convivan habitualmente con ellas, sean hijos/as a su cargo (menores o no de edad) u otras personas adultas dependientes','Únicamente sus padres o madres','Solo otras mujeres sin parentesco alguno'], correct:1 },
+          { text:'¿Qué edades recoge la ficha 2.4.6 como población destinataria?', options:['Mujeres de 18 años o más, y mujeres menores de edad emancipadas','Únicamente mujeres de 25 años o más','Mujeres de cualquier edad, incluidas niñas, sin excepción','Solo mujeres de 65 años o más'], correct:0 },
+          { text:'¿Qué exige la ficha respecto a los requisitos administrativos del tipo 1?', options:['Empadronamiento de 12 meses','No se exige ningún requisito, al margen de la prescripción técnica, al tratarse de un servicio de urgencia social y de acceso directo','Informe judicial previo obligatorio','Autorización expresa de la Diputación Foral con 15 días de antelación'], correct:1 },
+          { text:'Entre los requisitos de necesidad diferenciados por tipo, ¿qué exige la ficha para el tipo 2?', options:['Necesitar una intervención de urgencia, igual que en el tipo 1','Necesitar un apoyo intensivo, integral y especializado de media duración','No requerir ningún tipo de apoyo especializado','Haber agotado previamente la vía del tipo 1'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.4.6, explica las dos fases de intervención que ofrece el servicio (primera acogida y las posteriores a ella), y diferencia la población destinataria y el requisito de necesidad específico entre el tipo 1 y el tipo 2.', puntos:['Primera acogida: durante las 24 horas del día, incluye valoración, diagnóstico, orientación y alojamiento de urgencia.','Fase posterior: alojamiento con apoyos intensivos de intervención psicosocial, socioeducativa y de acompañamiento social, con presencia permanente de personal técnico especializado.','Tipo 1: acogida inmediata de corta estancia; requisito de necesidad: necesitar una intervención de urgencia.','Tipo 2: centros de media estancia para mujeres y sus hijos/as víctimas de maltrato doméstico, o mujeres solas embarazadas/con hijos menores en riesgo grave sin recursos ni apoyo sociofamiliar; requisito de necesidad: necesitar un apoyo intensivo, integral y especializado de media duración.'] } },
+    ]
+  },
+  {
+    id:'w7', range:'13/10 – 19/10', locked:false,
+    temas:[
+      { name:'2.5 Respiro', ficha:'Ficha 2.5', questions:[
+          { text:'¿En qué consiste el servicio de respiro, según su ficha?', options:['En ofrecer estancias temporales en servicios de atención secundaria (centros residenciales, centros de día y centros de noche) a personas dependientes, con discapacidad o con enfermedad mental crónica habitualmente atendidas por su red sociofamiliar','En sustituir de forma permanente a la familia cuidadora','En ofrecer únicamente asesoramiento telefónico a las personas cuidadoras','En prestar ayuda económica directa a la persona cuidadora, sin estancia alguna'], correct:0 },
+          { text:'¿Cuál es la finalidad principal que persigue este servicio respecto a la persona cuidadora?', options:['Sustituirla definitivamente en sus funciones de cuidado','Ofrecerle la posibilidad de disponer de un tiempo para su descanso, recuperación y/o desarrollo personal, o para hacer frente a una situación de necesidad que le impida ejercer sus funciones de cuidado','Obligarla a trasladarse junto con la persona cuidada al centro residencial','Formarla profesionalmente como cuidadora certificada'], correct:1 },
+          { text:'Según la ficha, ¿hacia qué finalidad común se orientan ambos objetivos dirigidos a la persona cuidadora?', options:['Hacia el ingreso definitivo de la persona cuidada en un centro residencial','Hacia posibilitar la permanencia en su domicilio habitual de la persona atendida y favorecer, mediante el respiro, una adecuada situación de cuidado','Hacia la sustitución de la persona cuidadora por personal contratado de forma indefinida','Hacia la ruptura del vínculo entre la persona cuidadora y la persona cuidada'], correct:1 },
+          { text:'¿Cuál de estos NO es uno de los objetivos complementarios del servicio de respiro centrados en la persona cuidada?', options:['Promoción de habilidades y competencias para su autonomía personal y una vida independiente','Promoción de habilidades para el desarrollo en el entorno comunitario y en relaciones interpersonales','Desarrollo de la capacidad de adaptación a un nuevo entorno, en previsión de necesidades futuras','Garantizar su escolarización obligatoria durante la estancia'], correct:3 },
+          { text:'¿Cuáles son las variantes del servicio de respiro, según su ficha?', options:['Estancias temporales en centros residenciales, servicios o centros de día, y centros de noche, todos de atención secundaria','Únicamente estancias en centros de día','Solo apoyo telefónico sin estancia alguna','Estancias temporales exclusivamente en el domicilio de otro familiar'], correct:0 },
+          { text:'¿Cuáles son las prestaciones que ofrece el servicio de respiro, según su ficha?', options:['Prestaciones económicas directas a la persona cuidadora','Las propias del centro residencial, del servicio o centro de día, o del centro de noche en el que se produzca la estancia temporal','Únicamente manutención','Ninguna prestación adicional a la estancia'], correct:1 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Las propias personas dependientes o con discapacidad, exclusivamente','Personas cuidadoras principales, habituales y no profesionales de personas en situación de dependencia, discapacidad o enfermedad mental crónica que darían acceso a servicios residenciales, de día o de noche de atención secundaria','Únicamente personal contratado de empresas de cuidados','Personas mayores de 80 años, sin más condición'], correct:1 },
+          { text:'Entre los requisitos administrativos, ¿qué exige la ficha respecto al empadronamiento de la persona cuidada y la cuidadora?', options:['Ningún requisito de empadronamiento','Estar empadronadas en el mismo domicilio y en un municipio del Territorio Histórico correspondiente, y permanecer empadronadas en dicho Territorio durante 12 meses continuados e inmediatamente anteriores a la solicitud','Empadronamiento en municipios distintos, obligatoriamente','Empadronamiento de al menos 5 años'], correct:1 },
+          { text:'¿Qué exige la ficha respecto a la convivencia entre persona cuidadora y persona cuidada, y qué excepción contempla?', options:['Debe acreditarse la convivencia, pudiendo excepcionalmente eximirse este requisito cuando la prestación efectiva y habitual de los cuidados quede justificada mediante informe social de los Servicios Sociales Municipales','La convivencia nunca es un requisito exigible','Debe acreditarse mediante escritura pública notarial, sin excepción posible','Solo se exige si la persona cuidada tiene reconocido Grado III de dependencia'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de respiro?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo cuando la estancia es en centro de noche','Solo si la persona cuidadora no está empadronada'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.5, explica la diferencia entre los objetivos del servicio de respiro centrados en la persona cuidadora y los objetivos complementarios centrados en la persona cuidada.', puntos:['Objetivos centrados en la persona cuidadora: a) disponer de tiempo personal para descanso, recuperación, ocio y autocuidado, o para afrontar una situación que le impida ejercer temporalmente sus funciones de cuidado; b) disminuir el esfuerzo asociado a las tareas de cuidado, previniendo sobrecarga y estrés.','Objetivos complementarios centrados en la persona cuidada: a) promoción de habilidades para su autonomía personal y una vida independiente; b) promoción de habilidades para el entorno comunitario y las relaciones interpersonales; c) desarrollo de la capacidad de adaptación a un nuevo entorno, en previsión de necesidades futuras.'] } },
+      { name:'2.6 Coordinación urgencias sociales', ficha:'Ficha 2.6', questions:[
+          { text:'¿Cómo define su ficha al Servicio de coordinación a urgencias sociales (2.6)?', options:['Un servicio que funciona solo en horario laboral de lunes a viernes','Un servicio que funciona todos los días del año para prestar atención inmediata a las situaciones de urgencia social dentro del Territorio Histórico respectivo','Un servicio exclusivamente telefónico sin desplazamiento posible','Un servicio de competencia exclusivamente municipal'], correct:1 },
+          { text:'¿Cuál de las siguientes NO es una de las funciones de primera atención de urgencia que recoge la ficha 2.6?', options:['Desplazarse al lugar en el que se haya producido la urgencia para atender in situ a las personas afectadas','Detectar in situ las situaciones de necesidad','Conceder de forma directa una prestación económica vinculada al servicio','Derivar la atención del caso, cuando resulte necesario, a los servicios que correspondan'], correct:2 },
+          { text:'¿Con qué dispositivo mínimo debe contar el servicio para articular sus intervenciones, según su ficha?', options:['Un equipo de asistencia jurídica gratuita','Un servicio telefónico de alerta y un dispositivo que, en su caso, se desplace al lugar de la urgencia','Una unidad móvil de rayos X','Un centro de acogida propio en cada municipio'], correct:1 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales que recoge la ficha 2.6?', options:['Información, valoración inicial de necesidades y de seguimiento, diagnóstico, orientación, acompañamiento social e intervención psicosocial (contención emocional)','Únicamente transporte adaptado','Solo mediación-intermediación','Exclusivamente prestaciones económicas de urgencia'], correct:0 },
+          { text:'¿Cuáles son las prestaciones complementarias que, en su caso, ofrece este servicio?', options:['Ninguna prestación complementaria','Transporte, manutención y alojamiento de urgencia','Únicamente lavandería','Solo higiene personal'], correct:1 },
+          { text:'Dentro de la población destinataria, ¿qué situaciones se agrupan bajo "desprotección sobrevenida"?', options:['Solo el desempleo reciente','Situaciones de pérdida y/o desorientación, de abandono o ausencia sobrevenida de la persona cuidadora, y de violencia de género o doméstica','Únicamente conflictos vecinales','Solo situaciones de impago de alquiler'], correct:1 },
+          { text:'¿Qué otro grupo de situaciones, distinto de la desprotección sobrevenida, recoge la ficha como población destinataria?', options:['Personas en situaciones de urgencia social derivadas de situaciones excepcionales, como accidente de circulación, incendio, inundación u otros siniestros','Personas en lista de espera de un centro de día','Personas que solicitan una segunda valoración de dependencia','Personas que han agotado su prestación económica'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.6 para su población destinataria?', options:['65 años o más','18 a 64 años','Sin límites de edad','Solo personas menores de edad'], correct:2 },
+          { text:'¿Qué exige la ficha 2.6 en materia de requisitos administrativos?', options:['Empadronamiento de 6 meses','No se exige ningún requisito, al tener este servicio la consideración de servicio de urgencia social y de acceso directo','Autorización previa del Servicio Social de Base','Informe médico de Osakidetza'], correct:1 },
+          { text:'¿Cuál es el requisito de necesidad que exige la ficha 2.6 para acceder al servicio?', options:['Tener reconocido un grado de dependencia','Afrontar una situación de urgencia social que requiera atención desde los servicios sociales','Haber agotado previamente otros recursos del SVSS','Disponer de informe social previo del Servicio Social de Base'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.6, enumera las cuatro funciones de primera atención de urgencia que puede desarrollar este servicio, y explica las dos grandes situaciones que definen a su población destinataria.', puntos:['Funciones: a) desplazarse al lugar de la urgencia para atender in situ; b) detectar in situ las situaciones de necesidad; c) acompañar a la persona o personas afectadas a centros sanitarios, dependencias policiales o judiciales u otras instancias; d) derivar la atención del caso a los servicios que correspondan.','Población destinataria — grupo a): personas en situación de desprotección sobrevenida (pérdida o desorientación, abandono o ausencia sobrevenida de la persona cuidadora, violencia de género o doméstica).','Población destinataria — grupo b): personas en situaciones de urgencia social derivadas de situaciones excepcionales (accidente de circulación, incendio, inundación u otros siniestros).'] } },
+    ]
+  },
+  {
+    id:'w8', range:'20/10 – 26/10', locked:false,
+    temas:[
+      { name:'2.7.2.1 Apoyo vida independiente', ficha:'Ficha 2.7.2.1', questions:[
+          { text:'¿A partir de qué se articula el servicio de apoyo a la vida independiente, según su ficha?', options:['A partir de un contrato laboral protegido','A partir de un programa de vida independiente, dirigido a personas con discapacidad que no pueden gestionar directamente su Plan de Vida Independiente debido a limitaciones derivadas de discapacidad intelectual y/o enfermedad mental','A partir de una beca de estudios universitarios','A partir de un ingreso obligatorio en centro residencial'], correct:1 },
+          { text:'¿En qué consiste este servicio, según su definición?', options:['En un conjunto organizado y coordinado de acciones de tutelaje y acompañamiento que ofrece apoyo cuando las personas ya viven de manera independiente o desean hacerlo, solas, en pareja o con otras personas','En la concesión automática de una vivienda de protección oficial','En la sustitución total de la persona en la toma de decisiones','En un curso de formación ocupacional de seis meses'], correct:0 },
+          { text:'¿Cómo debe ser, según la ficha, la prestación del sistema de apoyos de este servicio?', options:['Rígida y fija, igual para todas las personas usuarias','Dinámica, flexible y adaptada a las necesidades de cada persona','Limitada a un máximo de 3 meses','Exclusivamente telefónica'], correct:1 },
+          { text:'¿Cuál de los siguientes NO figura entre los objetivos que enumera la ficha 2.7.2.1?', options:['Facilitar el desenvolvimiento de las personas usuarias en el domicilio mediante aprendizajes útiles','Evitar el ingreso en un servicio de alojamiento o residencial de personas con capacidad para llevar, con apoyos, una vida independiente','Incrementar su sentimiento de seguridad y autoestima','Garantizar la contratación laboral inmediata de la persona usuaria'], correct:3 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.7.2.1?', options:['Información, valoración de seguimiento, mediación-intermediación, intervención socioeducativa y psicosocial, acompañamiento social y tutelaje','Únicamente transporte adaptado','Solo prestaciones económicas directas','Exclusivamente atención sociojurídica'], correct:0 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas con discapacidad intelectual y/o enfermedad mental en situación o riesgo de dependencia, o con una discapacidad igual o superior al 33%','Cualquier persona mayor de 65 años, sin más condición','Personas sin ningún tipo de discapacidad reconocida','Únicamente personas con discapacidad física, excluyendo la intelectual'], correct:0 },
+          { text:'¿A partir de qué edad se dirige este servicio?', options:['16 años o más','18 años o más','21 años o más','Sin límite de edad'], correct:1 },
+          { text:'¿Qué requisito administrativo exige la ficha para las personas SIN reconocimiento de dependencia?', options:['Ningún requisito adicional en ningún caso','Permanecer empadronada en cualquier municipio de la CAPV durante 12 meses inmediatamente anteriores a la solicitud','Empadronamiento de 5 años consecutivos','Informe favorable de dos médicos especialistas'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué exige la ficha respecto a la vivienda de la persona solicitante?', options:['No exige nada respecto a la vivienda','Disponer, en el momento de la concesión y durante el disfrute de la ayuda, de una vivienda adecuada para su utilización personal bajo cualquier título, excluido el precario','Ser propietaria de la vivienda, sin admitir alquiler','Residir obligatoriamente con sus padres'], correct:1 },
+          { text:'¿Está sujeto a copago el servicio de apoyo a la vida independiente?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo si la persona no tiene reconocida la dependencia','Solo durante el primer año de acceso'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.2.1, explica a qué población se dirige específicamente el servicio de apoyo a la vida independiente y qué tres requisitos de necesidad exige para acceder a él.', puntos:['Población: personas con discapacidad intelectual y/o enfermedad mental que no pueden gestionar directamente su Plan de Vida Independiente por las limitaciones derivadas de esa discapacidad o enfermedad.','Requisito a): contar con habilidades suficientes para desarrollar, con los apoyos necesarios, una vida independiente.','Requisito b): requerir apoyos para facilitar la vida en comunidad e inclusión social (evitando el aislamiento) y/o el desenvolvimiento autónomo en el domicilio y en el medio comunitario, educativo o laboral.','Requisito c): disponer, en el momento de la concesión y durante el disfrute de la ayuda, de una vivienda adecuada para su utilización personal bajo cualquier título, excluido el precario.'] } },
+      { name:'2.7.2.2 Ayudas técnicas', ficha:'Ficha 2.7.2.2', questions:[
+          { text:'¿Cuál es el objeto del servicio de ayudas técnicas (productos de apoyo) y adaptación del medio físico?', options:['Sustituir a la persona en todas sus actividades diarias','Favorecer la autonomía personal en la realización de las actividades de la vida diaria y el desenvolvimiento autónomo','Gestionar exclusivamente ayudas económicas de urgencia','Ofrecer alojamiento temporal a personas sin recursos'], correct:1 },
+          { text:'¿Cuáles son las tres acciones principales que desarrolla este servicio, según su ficha?', options:['Informar y orientar sobre productos de apoyo y adaptaciones del entorno; facilitar el acceso a productos de apoyo recuperables mediante préstamo o cesión temporal; y realizar propuestas de adaptación de la vivienda habitual','Diagnosticar enfermedades, prescribir medicación y realizar seguimiento clínico','Conceder becas de estudios, gestionar empleo y tramitar pensiones','Organizar transporte escolar, ocio y comedor social'], correct:0 },
+          { text:'¿A qué enfoque debe ajustar el servicio, en todo lo posible, su oferta de productos de apoyo y sus propuestas de adaptación del medio físico?', options:['Al enfoque exclusivamente médico-rehabilitador','Al enfoque de accesibilidad universal y diseño para todos y todas','Al enfoque de mínimo coste, sin más criterio','Al enfoque exclusivamente estético'], correct:1 },
+          { text:'Según la definición de la ficha, ¿qué es una ayuda técnica o producto de apoyo "recuperable"?', options:['Aquella que solo puede usarla una persona y no puede trasladarse','Aquella que puede ser utilizada sucesivamente por varias personas beneficiarias y trasladada de lugar sin costes mayores que los del transporte, accediéndose a ella mediante préstamo o cesión temporal','Aquella que se financia siempre mediante ayuda económica para su compra','Aquella reservada exclusivamente a menores de edad'], correct:1 },
+          { text:'¿Y qué es un producto de apoyo "no recuperable", según la ficha?', options:['Aquel que, por sus características, es intransferible y beneficia a una única persona demandante (o excepcionalmente a varias de forma simultánea), pudiendo garantizarse su acceso mediante ayudas económicas para su adquisición','Aquel que siempre se presta en régimen de alquiler mensual','Aquel que solo puede solicitarse una vez en la vida, sin excepción','Aquel reservado exclusivamente a personas mayores de 65 años'], correct:0 },
+          { text:'¿Cómo define la ficha la "adaptación del medio físico"?', options:['La instalación de mobiliario decorativo en el domicilio','El diseño y la ejecución de obras que permiten la eliminación de barreras arquitectónicas y la realización de adaptaciones en el lugar habitual de residencia, para facilitar la accesibilidad y mejorar la autonomía','La construcción de nuevas viviendas de protección oficial','La reforma integral de espacios públicos municipales'], correct:1 },
+          { text:'¿Cuál es la población destinataria general de este servicio, en cuanto a "situación"?', options:['Personas con discapacidad de grado igual o superior al 33%, y personas en situación de dependencia','Únicamente personas con discapacidad auditiva','Solo personas mayores de 65 años sin discapacidad reconocida','Exclusivamente personas menores de edad'], correct:0 },
+          { text:'¿Qué excepciones de edad contempla la ficha, pese a no establecer límite de edad general?', options:['Ninguna excepción, el límite es siempre el mismo','Adaptación de vehículos a motor mediante plataformas elevadoras (3 años o más) y prótesis auditivas (16 años o más)','Solo se exceptúan las sillas de ruedas eléctricas','Solo se exceptúan los audífonos infantiles'], correct:1 },
+          { text:'¿Qué requisito administrativo, relacionado con la periodicidad, exige la ficha para volver a solicitar el mismo producto de apoyo?', options:['No haber recibido ningún producto de apoyo o ayuda técnica por el mismo concepto en los últimos 6 años, salvo causa excepcional debidamente justificada (con matiz para prótesis auditivas)','Poder solicitarlo cada año sin ninguna limitación','Poder solicitarlo solo una vez en toda la vida, sin excepciones','No existe ningún límite temporal para repetir la solicitud'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de ayudas técnicas y adaptación del medio físico?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo las adaptaciones de vivienda, no los productos de apoyo','Solo para menores de edad'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.2.2, explica la diferencia entre un producto de apoyo (ayuda técnica) recuperable y uno no recuperable, y cómo se accede a cada uno de ellos.', puntos:['Recuperable: puede ser utilizado sucesivamente por varias personas beneficiarias y trasladado de lugar sin costes mayores que los del transporte. Se accede a él mediante un sistema de préstamo o cesión temporal.','No recuperable: por sus características es intransferible y beneficia a una única persona demandante (o, excepcionalmente, a varias de forma simultánea). El acceso puede garantizarse mediante la concesión de ayudas económicas para su adquisición.'] } },
+    ]
+  },
+  {
+    id:'w9', range:'27/10 – 02/11', locked:false,
+    temas:[
+      { name:'2.7.2.3 Tutela personas incapacitadas', ficha:'Ficha 2.7.2.3', questions:[
+          { text:'¿A quién se dirige el servicio de tutela para personas adultas incapacitadas (2.7.2.3), según su ficha?', options:['A cualquier persona mayor de 65 años, tenga o no capacidad de obrar','A personas adultas que no tienen capacidad para tomar sus propias decisiones en algunos o todos los ámbitos de la vida y que han sido incapacitadas judicialmente o están en proceso de incapacitación','A menores de edad en situación de desprotección','A personas con discapacidad física sin afectación cognitiva'], correct:1 },
+          { text:'¿Con qué carácter interviene este servicio, según su ficha?', options:['Con carácter prioritario, sustituyendo siempre a la familia','Con carácter subsidiario, es decir, solo cuando la persona no cuenta en su red sociofamiliar de apoyo con alguien que pueda asumir las funciones de tutela','Con carácter exclusivamente preventivo, sin intervención directa','Con carácter temporal, limitado a un máximo de 6 meses'], correct:1 },
+          { text:'¿Cuál de las siguientes NO es una función que la ficha atribuye al servicio con carácter previo a la declaración de incapacitación?', options:['Promoción de la declaración de incapacidad en quienes lo precisen','Valoración de la persona para determinar limitaciones en su capacidad de obrar','Información y asesoramiento sobre el procedimiento de incapacitación a familiares legitimados','Gestión directa del patrimonio inmobiliario de la persona antes de cualquier resolución judicial'], correct:3 },
+          { text:'Según la ficha, ¿en qué consiste la "tutela" (a diferencia de la curatela)?', options:['En representar a la persona declarada incapaz en todos los actos que, según la sentencia, no pueda realizar por sí sola, tanto en su esfera personal como en la administración de sus bienes','En asistir únicamente en la administración de bienes, sin representación personal','En una simple labor de asesoramiento sin efectos jurídicos','En sustituir a la persona en decisiones médicas exclusivamente'], correct:0 },
+          { text:'¿Y en qué consiste la "curatela", según la ficha?', options:['En representar íntegramente a la persona en todos los ámbitos de su vida','En asistir a la persona en los actos que afectan a la administración de sus bienes, cuando la sentencia solo la incapacita en esa esfera','En ejercer la patria potestad sobre la persona incapacitada','En gestionar exclusivamente su atención sanitaria'], correct:1 },
+          { text:'¿Cuál de estos objetivos, en relación con la persona tutelada, SÍ recoge la ficha 2.7.2.3?', options:['Apoyarle en la administración de sus bienes con total lealtad y transparencia, de acuerdo con el encargo de la autoridad judicial','Garantizarle un puesto de trabajo remunerado','Trasladarla obligatoriamente a un centro residencial','Anular por completo su capacidad de participación en decisiones sobre su vida'], correct:0 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas en situación de desprotección por carecer de capacidad para la defensa y el ejercicio de sus derechos y para la adopción de sus propias decisiones','Personas con discapacidad física sin afectación en la capacidad de decidir','Personas menores de edad bajo tutela de sus padres','Personas mayores de 65 años, sin más condición'], correct:0 },
+          { text:'¿A partir de qué edad se dirige este servicio?', options:['16 años o más','18 años o más','21 años o más','Sin límite de edad'], correct:1 },
+          { text:'Para ejercer las funciones de tutela y curatela, ¿qué exige la ficha como requisito administrativo?', options:['Únicamente la solicitud verbal de un familiar','Sentencia de incapacitación y documentación acreditativa de no contar con familiares susceptibles de asumir dichas funciones','Informe médico sin necesidad de resolución judicial','Autorización del Ayuntamiento de residencia'], correct:1 },
+          { text:'¿Está sujeto a copago este servicio, y en función de qué?', options:['No, es gratuito en todos los casos','Sí, está sujeto a copago, atendiendo a la situación patrimonial de la persona','Sí, pero con una cuota fija idéntica para todas las personas usuarias','Solo cuando se ejerce la curatela, nunca en la tutela'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.2.3, explica la diferencia entre tutela y curatela, y en qué consiste el carácter subsidiario de este servicio.', puntos:['Tutela: representar a la persona declarada incapaz en todos los actos que, según la sentencia, no pueda realizar por sí sola, tanto en su esfera personal como en la administración de sus bienes.','Curatela: asistir a la persona únicamente en los actos que afectan a la administración de sus bienes, cuando la sentencia solo la incapacita en esa esfera de su vida.','Carácter subsidiario: el servicio solo interviene cuando la persona no cuenta, en su red sociofamiliar de apoyo, con alguien que pueda asumir las funciones de tutela.'] } },
+      { name:'2.7.2.4 Transporte adaptado', ficha:'Ficha 2.7.2.4', questions:[
+          { text:'¿Cómo define su ficha el servicio de transporte adaptado (2.7.2.4)?', options:['Un servicio de transporte puerta a puerta, dirigido a personas con limitaciones en su autonomía derivadas de déficit de movilidad, mediante vehículos adaptados a productos de apoyo a la movilidad','Un servicio de transporte público general, sin adaptaciones específicas','Un servicio exclusivo para el traslado a centros hospitalarios','Un servicio de mudanzas para personas mayores'], correct:0 },
+          { text:'¿Para qué tipo de desplazamientos está pensado principalmente este servicio, según su ficha?', options:['Para cualquier desplazamiento, sin distinción alguna','Para desplazamientos que la persona no podría realizar mediante la red pública de transporte, cuando necesita desplazarse para actividades NO habituales','Únicamente para desplazamientos al extranjero','Solo para desplazamientos dentro del mismo edificio'], correct:1 },
+          { text:'Según la ficha, ¿cuál de estas NO se considera una "actividad habitual" a efectos de este servicio?', options:['Acudir cotidianamente en día laborable al trabajo, la escuela o el centro de día','Actividades de ocio y tiempo libre en fin de semana','Acudir al médico o realizar gestiones con cierta frecuencia mas no diariamente','Un viaje turístico ocasional al extranjero'], correct:3 },
+          { text:'¿Con qué administraciones busca este servicio contar colaboración, según su ficha?', options:['Con las áreas o departamentos de las administraciones públicas con responsabilidad en materia de movilidad y transporte','Únicamente con empresas privadas de mudanzas','Con el Ministerio de Defensa','Con asociaciones deportivas locales'], correct:0 },
+          { text:'¿Cuál es la única prestación de servicios sociales que recoge la ficha 2.7.2.4?', options:['Transporte adaptado','Atención personal','Mediación-intermediación','Acompañamiento social'], correct:0 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas con limitaciones severas en la movilidad en situación de dependencia en Grado II y III','Cualquier persona sin vehículo propio, sin más condición','Únicamente personas mayores de 80 años','Personas con discapacidad auditiva exclusivamente'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.7.2.4?', options:['65 años o más','18 a 64 años','Sin límites de edad','Solo personas menores de edad'], correct:2 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.7.2.4?', options:['Ningún requisito adicional','Permanecer empadronada en cualquier municipio de la CAPV durante 12 meses inmediatamente anteriores a la solicitud','Empadronamiento de 5 años','Informe judicial previo'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué exige la ficha respecto al vehículo propio y a la ayuda 3.3.2?', options:['No disponer de vehículo propio debidamente adaptado, ni solicitar al mismo tiempo la ayuda económica para adaptación de vivienda y vehículos particulares (3.3.2)','Disponer obligatoriamente de vehículo propio, aunque no esté adaptado','Haber agotado previamente la prestación 3.3.2, como requisito previo obligatorio','No se menciona ninguna relación con la ficha 3.3.2'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de transporte adaptado?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo si se usa más de 10 veces al mes','Solo para trayectos fuera del Territorio Histórico'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.2.4, explica qué se entiende por "actividades habituales" y por qué esta distinción resulta relevante para el servicio de transporte adaptado.', puntos:['Actividades habituales: las que se realizan cotidianamente en días laborables (acudir al trabajo, la escuela, el centro ocupacional o el centro de día); las de fin de semana (ocio y tiempo libre); y las que se realizan en días laborables con cierta frecuencia y regularidad, pero no diariamente (acudir al médico, hacer gestiones).','Relevancia: el servicio de transporte adaptado permite realizar desplazamientos que la persona no podría hacer mediante la red pública de transporte, precisamente cuando necesita desplazarse para actividades que NO son habituales.'] } },
+    ]
+  },
+  {
+    id:'w10', range:'03/11 – 09/11', locked:false,
+    temas:[
+      { name:'2.7.3.1 Intervención con familia', ficha:'Ficha 2.7.3.1', questions:[
+          { text:'¿En qué consisten los servicios de intervención socioeducativa y/o psicosocial con familia (2.7.3.1), según su ficha?', options:['En un conjunto de prestaciones relacionales orientadas a prestar apoyo socioeducativo y/o psicosocial a unidades familiares o convivenciales','En la concesión directa de ayudas económicas de urgencia','En la mediación exclusivamente entre ex cónyuges en procesos de divorcio','En la tramitación de solicitudes de renta de garantía de ingresos'], correct:0 },
+          { text:'¿Cuál de estos es uno de los dos objetivos generales que persigue este servicio, según su ficha?', options:['Prevenir un mayor deterioro del contexto convivencial, procurando la contención y el abordaje de comportamientos inadaptados o de situaciones de crisis','Garantizar el acceso automático a una vivienda social','Sustituir de forma permanente a la familia en el cuidado de sus miembros','Tramitar la escolarización obligatoria de los menores'], correct:0 },
+          { text:'¿De qué formas puede articular el servicio sus intervenciones, según la ficha?', options:['Únicamente de forma grupal, nunca individual ni familiar','Mediante intervenciones individuales, familiares y grupales, que pueden desarrollarse en el domicilio familiar o fuera de él, de carácter psicosocial y/o, en su caso, terapéutico','Solo mediante visitas domiciliarias no anunciadas','Exclusivamente por videollamada'], correct:1 },
+          { text:'¿Cuál de los siguientes NO es uno de los programas de intervención familiar especializada que recoge la ficha 2.7.3.1?', options:['Servicios de intervención terapéutica en familias problemáticas','Servicios de intervención en situaciones de maltrato, abandono o explotación','Servicios de intervención en situaciones de abuso sexual','Servicios de intervención en la búsqueda de empleo de los progenitores'], correct:3 },
+          { text:'¿Qué prestación "De Salud" incluye específicamente esta ficha?', options:['Atención de enfermería','Asistencia psicológica (terapia psicológica)','Rehabilitación física','Atención médica general'], correct:1 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Unidades familiares o convivenciales con personas, menores o mayores de edad, en situación de desprotección grave, incluidas aquellas que afronten violencia de género','Únicamente familias con ingresos económicos muy bajos, sin más condición','Solo familias con un único progenitor','Exclusivamente parejas en proceso de separación sin hijos/as'], correct:0 },
+          { text:'¿Qué exige la ficha respecto al empadronamiento cuando la intervención se orienta a situaciones de desprotección grave de personas menores de edad?', options:['Se exige empadronamiento de 12 meses','No se requerirá ningún periodo de empadronamiento previo','Se exige empadronamiento de 6 meses','Se exige empadronamiento en dos municipios distintos'], correct:1 },
+          { text:'¿Qué exige la ficha respecto a los requisitos administrativos para las víctimas de violencia de género?', options:['Empadronamiento de 12 meses en el mismo municipio del agresor','No se exigirá ningún requisito administrativo a las víctimas de violencia de género (mujeres y sus hijos/as menores bajo su patria potestad o guarda y custodia)','Denuncia previa formalizada, como requisito imprescindible','Sentencia judicial firme, como requisito imprescindible'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué debe integrar la unidad familiar o convivencial para acceder al servicio?', options:['Únicamente personas mayores de 65 años','A una o varias personas menores de edad en situación de desprotección grave que precisen apoyo socioeducativo/psicosocial para mejorar la convivencia y las habilidades parentales, o a personas adultas en situación de desprotección con necesidades similares','Solo personas sin ningún vínculo familiar entre sí','Exclusivamente personas con discapacidad reconocida'], correct:1 },
+          { text:'¿En qué se diferencia principalmente la ficha 2.7.3.1 (atención secundaria) del servicio de intervención socioeducativa y psicosocial de atención primaria (ficha 1.3)?', options:['En que no existe ninguna diferencia entre ambas','En que la ficha 2.7.3.1 atiende situaciones de desprotección grave, mientras que la ficha 1.3 atiende situaciones de riesgo leve o moderado de desprotección','En que la ficha 2.7.3.1 es de competencia municipal y la 1.3 de competencia foral','En que la ficha 1.3 solo atiende a personas mayores de edad'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.3.1, explica la diferencia de nivel de gravedad que este servicio atiende respecto al servicio de intervención socioeducativa y psicosocial de atención primaria (ficha 1.3), y enumera los tres programas de intervención familiar especializada que recoge la ficha.', puntos:['La ficha 1.3 (atención primaria) atiende situaciones de riesgo leve o moderado de desprotección en personas menores de edad.','La ficha 2.7.3.1 (atención secundaria) atiende situaciones de desprotección grave, tanto de menores como de personas adultas, incluidas las situaciones de violencia de género.','Programas: a) servicios de intervención terapéutica en familias problemáticas; b) servicios de intervención en situaciones de maltrato, abandono o explotación (incluido el ámbito laboral); c) servicios de intervención en situaciones de abuso sexual.'] } },
+      { name:'2.7.4 Atención temprana', ficha:'Ficha 2.7.4', questions:[
+          { text:'¿Cómo define su ficha la Atención Temprana?', options:['El conjunto de intervenciones dirigidas a la población infantil de 0 a 6 años, a sus familias y al entorno, desde una perspectiva interdisciplinar sanitaria, educativa y social, para dar respuesta a necesidades transitorias o permanentes por trastornos en su desarrollo o riesgo de padecerlos','Un programa exclusivamente escolar para niños y niñas de 6 a 12 años','Un servicio destinado únicamente a familias numerosas','Un servicio de guardería subvencionada'], correct:0 },
+          { text:'¿Cuál de los siguientes NO es uno de los objetivos que persigue la atención temprana, según su ficha?', options:['Reducir los efectos de una deficiencia o déficit sobre la niña o el niño, considerado en su globalidad','Evitar o reducir la aparición de deficiencias o déficits secundarios o asociados','Atender y cubrir las necesidades y demandas de la familia y el entorno','Garantizar la escolarización en un centro concertado específico'], correct:3 },
+          { text:'¿Qué es el EVAT, según la ficha 2.7.4?', options:['Un centro residencial para menores','El Equipo de Valoración en Atención Temprana, de carácter interdisciplinar, integrado por profesionales del ámbito sanitario, educativo y social, que planifica las actuaciones','Una prestación económica para familias con hijos/as menores de 6 años','Un programa de vacunación infantil'], correct:1 },
+          { text:'¿Qué función cumplen los EIAT respecto al EVAT?', options:['Sustituyen completamente al EVAT en la planificación','Son los equipos de intervención que desarrollan las actuaciones planificadas por el EVAT','Son un órgano de recurso contra las decisiones del EVAT','No tienen relación alguna con el EVAT'], correct:1 },
+          { text:'¿Cuáles son las prestaciones "De Servicios Sociales" que recoge la ficha 2.7.4?', options:['Información, orientación, valoración especializada y de seguimiento, intervención socioeducativa y psicosocial, y acompañamiento social','Únicamente manutención y lavandería','Solo transporte adaptado','Exclusivamente asistencia jurídica'], correct:0 },
+          { text:'¿Cuáles son las prestaciones "De Salud y Educación" que recoge la ficha 2.7.4?', options:['Ninguna, esta ficha no contempla prestaciones sanitarias ni educativas','Información, diagnóstico, valoración, orientación e intervención','Solo vacunación','Solo revisiones pediátricas anuales'], correct:1 },
+          { text:'¿Cuál es la población destinataria de este servicio, en cuanto a "situación"?', options:['Personas que presentan trastornos del desarrollo o riesgo de padecerlos','Cualquier menor de edad, sin más condición','Únicamente menores con discapacidad física diagnosticada','Solo menores en situación de exclusión social'], correct:0 },
+          { text:'¿A qué edad se dirige la ficha 2.7.4?', options:['De 0 a 3 años','De edad igual o inferior a 6 años','De 6 a 12 años','Sin límite de edad'], correct:1 },
+          { text:'¿Qué requisito administrativo exige la ficha 2.7.4 para el acceso?', options:['Ningún requisito adicional','Tener diagnosticado un trastorno físico, psíquico o sensorial en el desarrollo, o presentar riesgo de padecerlo por prematuridad, alteraciones congénitas, encefalopatías, retraso psicomotor u otras causas','Empadronamiento de 12 meses','Informe de exclusión social'], correct:1 },
+          { text:'¿Cuál es el requisito de necesidad que exige la ficha 2.7.4?', options:['Precisar servicios de atención temprana de acuerdo con la valoración técnica determinada por el EVAT','Tener reconocido un grado de discapacidad igual o superior al 33%','Estar escolarizado en un centro público','Haber agotado previamente otros recursos sanitarios'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.4, explica qué son el EVAT y el EIAT y qué papel juega cada uno en el servicio de atención temprana, y enumera dos de los cinco objetivos específicos que persigue este servicio.', puntos:['EVAT: Equipo de Valoración en Atención Temprana, de carácter interdisciplinar (sanitario, educativo y social), que planifica las actuaciones.','EIAT: equipos de intervención que desarrollan las actuaciones planificadas por el EVAT.','Dos objetivos (de los cinco posibles): reducir los efectos de una deficiencia o déficit; evitar o reducir la aparición de déficits secundarios o asociados; optimizar el desarrollo del niño o la niña; introducir mecanismos de compensación, eliminación de barreras y adaptación; atender y cubrir las necesidades y demandas de la familia y el entorno.'] } },
+    ]
+  },
+  {
+    id:'w11', range:'10/11 – 16/11', locked:false,
+    temas:[
+      { name:'2.7.5 Atención sociojurídica y psicosocial', ficha:'Ficha 2.7.5', questions:[
+          { text:'¿Qué necesidades aborda de manera integral la ficha 2.7.5, según su definición?', options:['Únicamente necesidades económicas de las víctimas','Las necesidades de intervención socioeducativa, psicosocial y, en su caso, terapéutica, así como de asesoramiento sociojurídico, derivadas de situaciones de maltrato y posibles actos contra la libertad sexual, sea cual sea el ámbito en que se hayan producido','Solo necesidades de alojamiento de urgencia','Exclusivamente necesidades de escolarización de menores'], correct:1 },
+          { text:'¿A quién se dirigen las intervenciones de esta ficha, según su texto?', options:['Únicamente a las víctimas, nunca a las personas agresoras','Tanto a las víctimas como a las personas agresoras','Únicamente a las personas agresoras, con fines de reeducación','Exclusivamente a profesionales sanitarios que atienden estos casos'], correct:1 },
+          { text:'En los casos de violencia ejercida por la pareja o expareja, ¿a quién más considera "víctima directa" la ficha, además de la persona agredida?', options:['A los vecinos y vecinas del domicilio','A las hijas e hijos que se encuentren bajo la patria potestad o guarda y custodia de la persona agredida','A los compañeros y compañeras de trabajo de la persona agredida','A ninguna otra persona; solo la persona agredida es víctima directa'], correct:1 },
+          { text:'¿Desde qué perspectiva se realizan estas intervenciones, según la ficha?', options:['Desde una perspectiva exclusivamente penal','Desde la perspectiva de género, con un enfoque que apoye el empoderamiento de las mujeres víctimas de violencia','Desde una perspectiva puramente médico-asistencial','Desde una perspectiva exclusivamente educativa'], correct:1 },
+          { text:'¿Cuál de estos SÍ es uno de los objetivos que la ficha dirige a la persona agresora?', options:['Facilitarle un tratamiento que posibilite la erradicación o contención de su comportamiento agresivo','Concederle una prestación económica compensatoria','Trasladarla obligatoriamente a otra Comunidad Autónoma','Eximirla de cualquier intervención psicosocial'], correct:0 },
+          { text:'¿Qué prestación específica de "atención sociojurídica" recoge la ficha 2.7.5, y a quién se dirige?', options:['A las personas agresoras, en el ámbito penitenciario','A las víctimas, en el ámbito pre-procesal','A cualquier persona, sin distinción de rol','A los profesionales del centro, para su formación jurídica'], correct:1 },
+          { text:'¿Cuáles son los dos tipos de servicios que distingue la ficha 2.7.5?', options:['Servicios de urgencia y servicios de larga estancia','1. Servicio de atención sociojurídica y psicosocial dirigido a las víctimas; 2. Servicio de atención psicosocial dirigido a las personas agresoras','Servicios municipales y servicios forales','Servicios presenciales y servicios telefónicos'], correct:1 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.5, en cuanto a "situación"?', options:['a) Ser persona víctima de maltrato o de actos contra la libertad sexual; b) ser persona autora de tales actos','Únicamente mujeres mayores de 30 años','Solo personas menores de edad','Exclusivamente personas con discapacidad reconocida'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.7.5 para su población destinataria?', options:['18 años o más, exclusivamente','Sin límites de edad','Solo personas de 65 años o más','Entre 18 y 64 años'], correct:1 },
+          { text:'¿Qué prestación "De Salud" contempla específicamente la ficha 2.7.5?', options:['Atención de enfermería','Asistencia psicológica (terapia psicológica)','Rehabilitación física','Atención médica general'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.5, explica los dos tipos de servicios que distingue esta ficha y a quién se considera "víctima directa" en los casos de violencia ejercida por la pareja o expareja.', puntos:['Tipo 1: servicio de atención sociojurídica y psicosocial dirigido a las víctimas de maltrato o de actos contra la libertad sexual.','Tipo 2: servicio de atención psicosocial dirigido a las personas agresoras, autoras de esos actos.','Víctima directa en violencia de pareja/expareja: además de la persona agredida, se consideran víctimas directas las hijas e hijos que se encuentren bajo su patria potestad o guarda y custodia.'] } },
+      { name:'2.7.6.1 Acogimiento familiar', ficha:'Ficha 2.7.6.1', questions:[
+          { text:'¿En qué servicio está integrado el servicio de promoción y apoyo técnico al acogimiento familiar (2.7.6.1), según su ficha?', options:['En el servicio de teleasistencia','En el servicio territorial especializado de protección a la infancia y la adolescencia','En el Servicio Social de Base municipal','En el servicio de coordinación a urgencias sociales'], correct:1 },
+          { text:'¿Cuál de las siguientes es una función GENERAL de este servicio (dirigida a la población en general)?', options:['Promover el acogimiento familiar mediante campañas divulgativas y de captación de familias acogedoras','Conceder directamente la guarda de un menor sin intervención judicial','Sustituir a la familia biológica en todos los casos','Tramitar exclusivamente adopciones internacionales'], correct:0 },
+          { text:'¿Cuál de las siguientes es una función ESPECÍFICA dirigida a niños, niñas o adolescentes para los que ya se ha formalizado un acogimiento familiar?', options:['Seleccionar familias candidatas mediante valoración de sus circunstancias','Supervisar periódicamente los acogimientos familiares constituidos, para determinar si se ajustan al interés superior del niño, niña o adolescente','Mantener una lista actualizada de familias acogedoras','Informar sobre el procedimiento de acogimiento a la población general'], correct:1 },
+          { text:'¿Qué otra función específica, relacionada con el aspecto económico, recoge la ficha respecto a los acogimientos ya formalizados?', options:['Tramitar ayudas económicas de compensación de los gastos asociados al acogimiento familiar','Cobrar una tasa a la familia acogedora por el servicio','Gestionar hipotecas para las familias acogedoras','Conceder becas universitarias a los menores acogidos'], correct:0 },
+          { text:'¿A quién más apoya este servicio, además de a las familias acogedoras, según su ficha?', options:['Únicamente a los jueces de menores','A la familia biológica','Exclusivamente a los servicios sanitarios','A ninguna otra persona'], correct:1 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.7.6.1?', options:['Información, valoración de seguimiento, mediación-intermediación, intervención socioeducativa y psicosocial, acompañamiento social, atención sociojurídica y formación','Únicamente manutención y lavandería','Solo transporte adaptado','Exclusivamente prestaciones económicas directas'], correct:0 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.6.1?', options:['a) Personas menores de edad para quienes el acogimiento familiar sea una alternativa de protección adecuada; b) personas o unidades familiares que deseen acoger y cumplan los requisitos de adecuación','Únicamente familias con más de tres hijos/as biológicos','Solo personas mayores de 65 años','Exclusivamente personal técnico de los servicios sociales'], correct:0 },
+          { text:'¿Qué edades recoge la ficha para las personas acogidas y para las personas acogedoras o candidatas?', options:['Acogidas: menores de 18 años; acogedoras o candidatas: 18 años o más','Acogidas: 18 años o más; acogedoras: menores de 18 años','Ambas deben ser menores de 18 años','No se establece ninguna diferencia de edad'], correct:0 },
+          { text:'¿Qué requisito administrativo exige la ficha para ser seleccionada y formar parte de la lista de familias acogedoras?', options:['Ningún requisito administrativo','Estar empadronada en algún municipio del Territorio Histórico en el que se solicita el acogimiento, en el momento de la solicitud y de la formalización, y solicitar el acogimiento familiar','Tener ingresos superiores a un umbral determinado','Haber acogido previamente a otro menor con éxito'], correct:1 },
+          { text:'¿Qué requisito administrativo exige la ficha para acceder a los servicios de apoyo y seguimiento (una vez ya en curso el acogimiento)?', options:['Haberse formalizado el acogimiento familiar','Haber transcurrido un mínimo de 5 años desde la formalización','No haber tenido nunca contacto con la familia biológica','Renunciar expresamente a cualquier ayuda económica'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.6.1, diferencia las funciones generales del servicio (dirigidas a la población en general y a las familias candidatas) de las funciones específicas dirigidas a los niños, niñas o adolescentes para los que ya se ha formalizado un acogimiento familiar.', puntos:['Funciones generales: a) promover el acogimiento mediante campañas divulgativas y de captación; b) seleccionar familias candidatas valorando su adecuación; c) mantener una lista actualizada de familias acogedoras; d) informar sobre el procedimiento, el ejercicio del acogimiento y su impacto.','Funciones específicas (acogimiento ya formalizado): a) apoyar a las familias acogedoras, asesorándolas y orientándolas, incluido al finalizar el acogimiento o si la convivencia continúa tras la mayoría de edad; b) supervisar periódicamente los acogimientos constituidos según el interés superior del menor; c) tramitar ayudas económicas de compensación de gastos; d) apoyar a la familia biológica.'] } },
+    ]
+  },
+  {
+    id:'w12', range:'17/11 – 23/11', locked:false,
+    temas:[
+      { name:'2.7.6.2 Adopción', ficha:'Ficha 2.7.6.2', questions:[
+          { text:'¿En qué servicio está integrado el servicio de promoción y apoyo técnico a la adopción (2.7.6.2)?', options:['En el servicio de teleasistencia','En el servicio territorial especializado de protección a la infancia y la adolescencia','En el Servicio Social de Base municipal','En el servicio de coordinación a urgencias sociales'], correct:1 },
+          { text:'¿A qué colectivo hace mención expresa la ficha al hablar de la promoción de la adopción mediante campañas divulgativas?', options:['A niños y niñas con necesidades especiales, en particular','A familias numerosas, exclusivamente','A menores de otras comunidades autónomas, exclusivamente','A jóvenes recién emancipados'], correct:0 },
+          { text:'¿Qué término utiliza la ficha 2.7.6.2 para referirse a la valoración de las familias candidatas, a diferencia del término usado en la ficha de acogimiento familiar?', options:['"Adecuación", igual que en acogimiento familiar','"Idoneidad"','"Capacitación"','"Habilitación"'], correct:1 },
+          { text:'¿Cuál de estas funciones dirigidas a menores ya adoptados SÍ recoge la ficha 2.7.6.2?', options:['Supervisar periódicamente las adopciones familiares constituidas, para determinar si se ajustan al interés superior del niño, niña o adolescente adoptada','Anular la adopción de forma automática a los 18 años','Trasladar a la persona adoptada a un centro residencial','Suprimir cualquier contacto con la familia biológica en todos los casos'], correct:0 },
+          { text:'¿Qué función específica recoge la ficha 2.7.6.2 que NO aparece en la ficha de acogimiento familiar (2.7.6.1)?', options:['Mantener una lista actualizada de familias','Informar sobre el procedimiento a la población general','Acompañar y apoyar a la persona adoptada en el procedimiento de búsqueda de información sobre sus orígenes','Tramitar ayudas económicas de compensación de gastos'], correct:2 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.7.6.2?', options:['Información, valoración de seguimiento, mediación-intermediación, intervención socioeducativa y psicosocial, acompañamiento social, atención sociojurídica y formación','Únicamente manutención','Solo transporte adaptado','Exclusivamente ayudas económicas directas'], correct:0 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.6.2?', options:['a) Menores para quienes la adopción sea una alternativa de protección adecuada; b) personas/familias que deseen adoptar y cumplan los requisitos de idoneidad; c) personas mayores de edad adoptadas en busca de sus orígenes','Únicamente personas menores de edad','Solo familias con más de un hijo/a biológico','Exclusivamente personal técnico municipal'], correct:0 },
+          { text:'¿A partir de qué edad se sitúa la población destinataria en el caso de "personas adoptantes y personas adoptadas en busca de sus orígenes"?', options:['16 años o más','18 años o más','21 años o más','Sin límite de edad'], correct:1 },
+          { text:'¿Qué requisitos administrativos exige la ficha para ser familiar adoptante o persona candidata?', options:['Ningún requisito administrativo','Estar empadronada la persona o personas adoptantes en el Territorio Histórico donde solicitan la adopción, solicitar la declaración de idoneidad, e iniciarse un procedimiento de adopción','Tener ya experiencia previa como familia acogedora','Renunciar a cualquier otra prestación del SVSS'], correct:1 },
+          { text:'¿Cuál de estas poblaciones destinatarias es EXCLUSIVA de la ficha 2.7.6.2, y no aparece en la ficha 2.7.6.1?', options:['Las personas menores de edad susceptibles de protección','Las familias candidatas que cumplan los requisitos','Las personas mayores de edad adoptadas que buscan información sobre sus orígenes','Los profesionales del servicio territorial'], correct:2 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.6.2, explica en qué se diferencia esta ficha de la 2.7.6.1 (acogimiento familiar) en cuanto al concepto usado para valorar a las familias candidatas, y menciona la función específica que solo recoge la ficha de adopción.', puntos:['En acogimiento familiar (2.7.6.1) se valora la "adecuación" de las familias candidatas; en adopción (2.7.6.2) se valora su "idoneidad".','Función exclusiva de la ficha de adopción: acompañar y apoyar a la persona adoptada, ya mayor de edad, en el procedimiento de búsqueda de información sobre sus orígenes.'] } },
+      { name:'3.1.1 PEAP', ficha:'Ficha 3.1.1', questions:[
+          { text:'¿Cuál es la finalidad de la Prestación Económica de Asistencia Personal (PEAP, 3.1.1), según su ficha?', options:['Promover la autonomía de las personas con dependencia, contribuyendo a la contratación de una asistencia personal que facilite el acceso a la educación y el trabajo, así como una vida más autónoma en las actividades básicas de la vida diaria','Financiar íntegramente el alquiler de una vivienda','Sustituir la prestación económica vinculada al servicio en todos los casos','Cubrir exclusivamente gastos de transporte'], correct:0 },
+          { text:'¿Qué carácter tiene la PEAP, según su ficha?', options:['De pago único','Periódico','Trimestral únicamente','Solo se abona una vez al año'], correct:1 },
+          { text:'¿En qué sistema se enmarca la PEAP y con qué es incompatible, con carácter general?', options:['Se enmarca en el SAAD y es incompatible con otras prestaciones económicas del mismo, salvo la Prestación Económica Vinculada al Servicio cuando no se destina a una plaza de alojamiento o residencial','No se enmarca en ningún sistema estatal','Es compatible sin excepción con todas las demás prestaciones económicas del SAAD','Es incompatible con todos los servicios de atención a la dependencia, sin excepción'], correct:0 },
+          { text:'¿Qué ocurre con la PEAP cuando se compatibiliza con una estancia temporal en un servicio residencial por un período superior a dos meses?', options:['Se extingue de forma definitiva','Queda temporalmente en suspensión hasta que finalice la estancia','Se duplica su importe','No sufre ninguna modificación'], correct:1 },
+          { text:'¿Quién fija anualmente el importe máximo de la PEAP, y con qué referencia?', options:['Lo fija el Gobierno Vasco, sin referencia estatal','Lo fijan las Diputaciones Forales para cada grado de dependencia, tomando como referencia mínima la establecida por el Estado para cada ejercicio','Lo fija cada Ayuntamiento de forma independiente','Lo fija Osakidetza en función del diagnóstico médico'], correct:1 },
+          { text:'¿Qué servicio puede simultanearse con la PEAP sin afectar a su importe?', options:['El servicio de ayuda a domicilio, en todo caso','El servicio de teleasistencia','El centro de día, sin excepción','Ningún servicio puede simultanearse'], correct:1 },
+          { text:'¿Cuál es la población destinataria de la PEAP, en cuanto a edad?', options:['Personas de edad igual o superior a 3 años','Personas de 18 años o más, exclusivamente','Personas de 65 años o más','Sin límite de edad, incluidos bebés de cualquier edad'], correct:0 },
+          { text:'Entre los requisitos aplicables a la persona con dependencia, ¿qué exige la ficha respecto a la capacidad de dirigir sus propios apoyos?', options:['Tener capacidad para determinar los servicios que requiere y dar instrucciones al asistente personal, salvo cuando no tenga 18 años (donde la ejerce quien tenga la patria potestad o tutela) o no tenga capacidad intelectual (donde puede ejercerla con apoyos para la toma de decisiones asistida)','No se exige ninguna capacidad de dirección, siempre decide el asistente personal','Debe tener siempre reconocida una incapacitación judicial previa','Debe renunciar a cualquier capacidad de decisión sobre el servicio'], correct:0 },
+          { text:'¿Qué requisito impide a determinadas personas actuar como asistente personal, según la ficha?', options:['Ser mayor de edad','No ser cónyuge o pariente por consanguinidad, afinidad o adopción hasta el tercer grado de la persona beneficiaria, ni mantener con ella un vínculo por acogimiento familiar','No tener estudios universitarios','No residir en el mismo municipio que la persona beneficiaria'], correct:1 },
+          { text:'¿Qué debe reunir la persona que actúe como asistente personal en materia de Seguridad Social, según la ficha?', options:['Ninguna condición especial','Reunir las condiciones de afiliación, alta y cotización a la Seguridad Social','Estar exenta de cotizar durante el primer año','Cotizar exclusivamente en el régimen agrario'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.1.1, explica el requisito que impide a determinadas personas actuar como asistente personal, y detalla las condiciones que debe cumplir la persona con dependencia para poder dirigir sus propios apoyos.', puntos:['Impedimento para ser asistente personal: no ser cónyuge ni pariente por consanguinidad, afinidad o adopción hasta el tercer grado de la persona beneficiaria, ni mantener con ella un vínculo por acogimiento familiar.','Condición de la persona con dependencia: tener capacidad para determinar los servicios que requiere, ejercer su control y dar instrucciones al asistente personal.','Excepciones: si no tiene 18 años, esa capacidad la ejerce quien ostente la patria potestad o la tutela; si carece de capacidad intelectual para ejercerla autónomamente, puede hacerlo con los apoyos necesarios para la toma de decisiones asistida.'] } },
+    ]
+  },
+  {
+    id:'w13', range:'24/11 – 30/11', locked:false,
+    temas:[
+      { name:'3.2.1 PECEF', ficha:'Ficha 3.2.1', questions:[
+          { text:'¿Cuál es el objetivo de la Prestación Económica para Cuidados en el Entorno Familiar y Apoyo a Personas Cuidadoras No Profesionales (PECEF, 3.2.1)?', options:['Contribuir a la cobertura de los gastos derivados de la atención prestada a la persona en situación de dependencia por una persona de su red sociofamiliar que actúe como cuidadora principal y habitual','Financiar la contratación de una empresa de limpieza','Sustituir íntegramente el sueldo laboral de la persona cuidadora','Cubrir exclusivamente los gastos de transporte de la persona cuidada'], correct:0 },
+          { text:'¿Qué carácter tiene la PECEF, según su ficha?', options:['De pago único','Periódico','Solo se abona en Navidad','Bianual'], correct:1 },
+          { text:'¿En qué sistema se enmarca la PECEF y con qué es incompatible, con carácter general?', options:['Se enmarca en el SAAD y es incompatible con las demás prestaciones económicas del mismo, salvo la prestación económica vinculada al servicio','No se enmarca en ningún sistema, es totalmente independiente','Es compatible sin excepción con todas las prestaciones económicas del SAAD','Es incompatible con todos los servicios de atención a la dependencia, sin excepción'], correct:0 },
+          { text:'¿Qué dos elementos debe integrar la concesión de la PECEF para garantizar la calidad de la atención, según su ficha?', options:['La supervisión del uso de la prestación y la adecuación de la atención en el domicilio; y la formación y capacitación de la persona cuidadora principal','La contratación de un seguro médico privado y un plan de pensiones','La firma de un contrato laboral formal y el alta en la Seguridad Social','La entrega de un vehículo adaptado y una vivienda tutelada'], correct:0 },
+          { text:'¿Quién fija anualmente el importe máximo de la PECEF, y con qué referencia?', options:['Lo fija el Gobierno Vasco sin referencia estatal','Lo fijan las Diputaciones Forales para cada grado de dependencia, tomando como referencia mínima la establecida por el Estado para cada ejercicio','Lo fija cada Ayuntamiento de forma independiente','Lo fija Osakidetza'], correct:1 },
+          { text:'¿Qué servicio puede simultanearse con la PECEF sin afectar a su importe?', options:['El servicio de ayuda a domicilio, sin excepción','El servicio de teleasistencia','El centro residencial, sin excepción','Ningún servicio puede simultanearse en ningún caso'], correct:1 },
+          { text:'¿Qué ocurre con la PECEF cuando se compatibiliza con una estancia temporal en un servicio de carácter residencial?', options:['Se extingue de forma definitiva','Queda temporalmente en suspensión hasta que finalice la estancia, en los términos regulados por cada Diputación Foral','Se duplica automáticamente su importe','No sufre ninguna modificación'], correct:1 },
+          { text:'¿Cuál es la población destinataria de la PECEF, en cuanto a "situación" y "edad"?', options:['Personas en situación de dependencia; sin límites de edad','Únicamente personas mayores de 65 años','Solo personas con discapacidad, sin dependencia reconocida','Personas de 3 a 18 años exclusivamente'], correct:0 },
+          { text:'Entre los factores que minoran el importe máximo de la PECEF, ¿cuál de estos SÍ figura en la ficha?', options:['La capacidad económica de la persona usuaria','El número de hermanos/as de la persona cuidadora','El nivel de estudios de la persona cuidadora','La distancia entre el domicilio y el centro de salud'], correct:0 },
+          { text:'¿Qué tipo de complementos de otros regímenes públicos de protección social pueden minorar el importe de la PECEF, según la ficha?', options:['Ninguno, la PECEF es siempre independiente de otras prestaciones','El complemento de gran invalidez, el complemento por hijo/a a cargo con discapacidad ≥75%, el complemento por necesidad de tercera persona de la pensión de invalidez no contributiva, y el subsidio por ayuda de tercera persona','Únicamente las becas de estudios','Solo las prestaciones por desempleo'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.2.1, explica los dos elementos que debe integrar la concesión de la PECEF para garantizar la calidad de la atención prestada, y qué ocurre cuando se compatibiliza con una estancia temporal en un servicio residencial.', puntos:['Elemento a): la supervisión del uso de la prestación y de la adecuación de la atención prestada en el domicilio.','Elemento b): la formación y capacitación de la persona cuidadora principal para asumir la carga de la atención y, en su caso, la supervisión de otras personas cuidadoras.','Compatibilidad con estancia temporal residencial: la PECEF queda temporalmente en suspensión hasta que finalice la estancia, en los términos que regule cada Diputación Foral.'] } },
+      { name:'3.3.1 Productos apoyo', ficha:'Ficha 3.3.1', questions:[
+          { text:'¿Cuál es el objetivo de la ayuda económica para la adquisición de productos de apoyo no recuperables (3.3.1)?', options:['Facilitar la compra y, en su caso, la instalación de productos de apoyo no recuperables a personas con limitaciones en su autonomía personal','Financiar la compra de un vehículo particular completo','Cubrir gastos de alquiler de vivienda','Pagar tratamientos médicos privados'], correct:0 },
+          { text:'Según la ficha, ¿qué se entiende por productos de apoyo "no recuperables"?', options:['Aquellos que pueden usarse sucesivamente por varias personas','Aquellos que, por sus características, son intransferibles y benefician a una única persona demandante (o, excepcionalmente, a varias de forma simultánea)','Aquellos de coste inferior a 50 euros','Aquellos fabricados exclusivamente en el extranjero'], correct:1 },
+          { text:'¿Qué carácter tiene esta ayuda económica, según su ficha?', options:['Periódico mensual','De pago único','Trimestral','Solo se concede una vez cada 20 años, sin excepción alguna'], correct:1 },
+          { text:'¿Es compatible esta ayuda con otras prestaciones económicas para el mismo fin?', options:['No, es siempre incompatible con cualquier otra ayuda','Sí, siempre que el importe total de las prestaciones y ayudas percibidas no supere el importe total del dispositivo adquirido; también es compatible con cualquier servicio','Solo es compatible si se renuncia previamente a cualquier servicio del SVSS','Solo es compatible con prestaciones de otras comunidades autónomas'], correct:1 },
+          { text:'¿Quién determina el importe máximo de esta ayuda para cada tipo de producto de apoyo?', options:['El Gobierno Vasco, de forma centralizada','Las Diputaciones Forales','El Ayuntamiento de residencia','Osakidetza'], correct:1 },
+          { text:'¿Cuál es la población destinataria de esta ayuda, en cuanto a "situación"?', options:['Personas en situación de dependencia, y personas con un grado de discapacidad igual o superior al 33%','Únicamente personas mayores de 65 años','Solo personas con discapacidad auditiva','Exclusivamente menores de edad'], correct:0 },
+          { text:'¿Qué requisito administrativo de empadronamiento exige la ficha 3.3.1?', options:['Empadronamiento de 6 meses','Permanecer empadronada en cualquier municipio de la CAPV durante 12 meses inmediatamente anteriores a la fecha de solicitud','Empadronamiento de 5 años continuados','No se exige empadronamiento alguno'], correct:1 },
+          { text:'¿Mediante qué informe debe tenerse reconocida la necesidad del producto de apoyo solicitado?', options:['Mediante informe de valoración del Servicio de ayudas técnicas y adaptación del medio físico (2.7.2.2)','Mediante informe policial','Mediante certificado municipal de convivencia','Mediante autorización del centro escolar'], correct:0 },
+          { text:'¿Cuánto tiempo debe haber transcurrido, con carácter general, desde la última vez que se recibió una prestación o ayuda para el mismo tipo de producto de apoyo?', options:['1 año','6 años, salvo causa excepcional debidamente justificada','20 años, sin excepción','No existe ningún límite temporal'], correct:1 },
+          { text:'¿Qué otro requisito económico exige la ficha 3.3.1 para acceder a esta ayuda?', options:['Ningún requisito económico','Tener una capacidad económica individual inferior al límite máximo que se establezca para acceder a los diferentes productos de apoyo','Tener un patrimonio superior a un umbral mínimo','Estar exento del pago del IRPF'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.3.1, explica qué se entiende por producto de apoyo "no recuperable" y detalla los requisitos de acceso relacionados con el empadronamiento, la valoración previa y la periodicidad de la solicitud.', puntos:['Producto no recuperable: por sus características es intransferible, beneficiando a una única persona demandante (o excepcionalmente a varias de forma simultánea).','Empadronamiento: permanecer empadronada en cualquier municipio de la CAPV durante los 12 meses inmediatamente anteriores a la solicitud.','Valoración previa: tener reconocida la necesidad del producto mediante informe de valoración del Servicio de ayudas técnicas y adaptación del medio físico (2.7.2.2).','Periodicidad: no haber recibido una prestación o ayuda para el mismo tipo de producto en los 6 años anteriores, salvo causa excepcional justificada.'] } },
+    ]
+  },
+  {
+    id:'w14', range:'01/12 – 07/12', locked:false,
+    temas:[
+      { name:'3.3.2 Adaptaciones vivienda y vehículo', ficha:'Ficha 3.3.2', questions:[
+          { text:'¿Cuál es el objetivo de la ayuda económica para adaptaciones en la vivienda habitual y en los vehículos particulares (3.3.2)?', options:['Facilitar, a personas con limitaciones en su autonomía personal, la realización de adaptaciones en su vivienda habitual y/o vehículo particular, para mejorar su accesibilidad y favorecer su desenvolvimiento autónomo','Financiar la compra de una vivienda nueva','Cubrir el alquiler mensual de un vehículo adaptado','Pagar el seguro del vehículo particular'], correct:0 },
+          { text:'En el caso de las adaptaciones en la vivienda, ¿a qué pueden afectar según la ficha?', options:['A cualquier vivienda, sea o no la habitual','Solo a la vivienda habitual, tanto al interior como a los elementos comunes del edificio en que se encuentre integrada','Únicamente a segundas residencias','A viviendas de otros familiares, sin restricción'], correct:1 },
+          { text:'En el caso de las adaptaciones en el vehículo, ¿a qué pueden afectar según la ficha?', options:['A cualquier vehículo, sin restricción de titularidad','A un vehículo particular, propio de la persona beneficiaria o de un/a familiar','Únicamente a vehículos de empresas de transporte público','A un máximo de tres vehículos simultáneamente'], correct:1 },
+          { text:'¿Qué carácter tiene esta ayuda económica, según su ficha?', options:['Periódico mensual','De pago único','Trimestral','Se abona automáticamente cada 5 años'], correct:1 },
+          { text:'¿Con qué es incompatible la prestación destinada a la adaptación de la vivienda, según la ficha?', options:['Con el disfrute, en primera ocupación, de una vivienda calificada como reservada para persona con discapacidad','Con cualquier otro servicio del SVSS, sin excepción','Con estar empadronado en la CAPV','Con tener reconocida una discapacidad'], correct:0 },
+          { text:'¿Quién determina el importe máximo de esta ayuda para cada tipo de adaptación?', options:['El Gobierno Vasco','Las Diputaciones Forales','El Ayuntamiento de residencia','Osakidetza'], correct:1 },
+          { text:'¿Cuál es la población destinataria de esta ayuda, en cuanto a "situación"?', options:['Personas en situación de dependencia y personas con discapacidad con un grado igual o superior al 33%','Únicamente personas mayores de 65 años sin discapacidad','Solo personas con discapacidad auditiva','Exclusivamente menores de edad'], correct:0 },
+          { text:'¿Qué debe presentar la persona solicitante respecto al proyecto de adaptación, según la ficha?', options:['Ningún proyecto, basta con la solicitud verbal','Un proyecto de adaptación que cumpla todos los criterios de accesibilidad marcados por la normativa vigente, salvo casos de imposibilidad manifiesta aprobados por la Diputación Foral','Un proyecto redactado exclusivamente por un arquitecto colegiado en Madrid','Un proyecto que no podrá superar los 500 euros de coste'], correct:1 },
+          { text:'¿Cuánto tiempo debe haber transcurrido, con carácter general, desde la última ayuda recibida para el mismo tipo de adaptación, según la ficha 3.3.2?', options:['5 años','6 años, igual que en la ficha 3.3.1','10 años, salvo causa excepcional debidamente justificada','No existe límite temporal alguno'], correct:2 },
+          { text:'¿En qué se diferencia el plazo de repetición de solicitud de la ficha 3.3.2 respecto al de la ficha 3.3.1 (productos de apoyo no recuperables)?', options:['Son exactamente el mismo plazo, 6 años en ambas','La 3.3.2 exige 10 años y la 3.3.1 exige 6 años','La 3.3.2 exige 3 años y la 3.3.1 exige 6 años','Ninguna de las dos fichas establece un plazo de este tipo'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.3.2, explica qué alcance tienen las adaptaciones de vivienda y de vehículo que financia esta ayuda, y qué diferencia de plazo existe respecto a la ficha 3.3.1 en cuanto a la repetición de la solicitud para el mismo tipo de ayuda.', puntos:['Adaptaciones de vivienda: solo pueden afectar a la vivienda habitual, tanto al interior de la vivienda como a los elementos comunes del edificio en que se encuentre integrada.','Adaptaciones de vehículo: solo pueden afectar a un vehículo particular, propio de la persona beneficiaria o de un/a familiar.','Diferencia de plazo: la ficha 3.3.2 exige que no hayan transcurrido menos de 10 años desde la última ayuda para el mismo tipo de adaptación, frente a los 6 años que exige la ficha 3.3.1 para productos de apoyo no recuperables.'] } },
+      { name:'1.6 Teleasistencia', ficha:'Ficha 1.6', questions:[
+          { text:'¿Cómo define su ficha el servicio de teleasistencia (1.6)?', options:['Un dispositivo de comunicación de telealarma que, mediante línea telefónica y equipamiento informático, permite contactar de forma inmediata con un servicio de atención permanente, 24 horas al día y todos los días del año','Un servicio exclusivamente de visitas domiciliarias semanales','Un chat de mensajería instantánea sin atención telefónica','Un servicio de reparto de medicamentos a domicilio'], correct:0 },
+          { text:'¿Cómo puede activarse el contacto entre el equipo de atención y la persona usuaria, según la ficha?', options:['Únicamente a petición de la persona usuaria','Tanto a petición de la persona usuaria como desde el propio servicio, cuando existan razones que lleven a considerar una situación de riesgo','Únicamente de forma automática cada 24 horas, sin posibilidad de activación manual','Solo mediante intervención judicial previa'], correct:1 },
+          { text:'¿Cuáles son los tres servicios con los que cuenta la teleasistencia para articular sus actuaciones, según su ficha?', options:['De contacto, de registro de datos, y de atención personal','De vigilancia, de limpieza, y de manutención','De transporte, de alojamiento, y de formación','De mediación, de tutela, y de acogimiento'], correct:0 },
+          { text:'¿Cuál de estos SÍ es un objetivo de la teleasistencia, según su ficha?', options:['Favorecer la permanencia e integración en el entorno familiar y social, evitando el ingreso innecesario en servicios residenciales','Sustituir de forma permanente a la red sociofamiliar de apoyo','Obligar al ingreso en residencia tras el primer aviso de emergencia','Eliminar cualquier contacto entre la persona usuaria y su familia'], correct:0 },
+          { text:'¿En qué ámbito territorial interviene este servicio, según la ficha?', options:['En todo el Estado español','Cuando la situación de necesidad se produce en el territorio de la CAPV','Únicamente en capitales de provincia','Solo fuera del territorio de la CAPV'], correct:1 },
+          { text:'¿Cuál es la población destinataria de la teleasistencia en cuanto a "situación"?', options:['a) Personas en riesgo o situación de dependencia; b) personas mayores autónomas que vivan solas; c) personas en riesgo de aislamiento social con necesidades atendibles por el servicio, según el Servicio Social de Base','Únicamente personas hospitalizadas','Solo personas con discapacidad física','Exclusivamente menores de edad en riesgo'], correct:0 },
+          { text:'¿A partir de qué edad se dirige la teleasistencia a las "personas mayores autónomas que vivan solas"?', options:['65 años o más','70 años o más','75 años o más','Sin límite de edad'], correct:2 },
+          { text:'¿Y a partir de qué edad se dirige a las "personas en riesgo de dependencia"?', options:['60 años o más','65 años o más','70 años o más','Sin límite de edad'], correct:1 },
+          { text:'¿Qué "otros requisitos" (no administrativos) exige la ficha 1.6 para acceder al servicio?', options:['Tener capacidad para utilizar adecuadamente el equipo de teleasistencia (la propia persona o quien conviva con ella) y disponer de línea telefónica compatible en el domicilio','Superar un examen técnico sobre el uso de dispositivos electrónicos','Contar con un seguro médico privado','Residir en una vivienda de más de 90 metros cuadrados'], correct:0 },
+          { text:'¿Está sujeto a copago el servicio de teleasistencia?', options:['No, es gratuito en todos los casos','Sí, el servicio está sujeto a copago','Solo para personas menores de 75 años','Solo si se activa más de 5 veces al mes'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 1.6, explica los tres niveles de edad que distingue la población destinataria de teleasistencia en función de la situación de la persona.', puntos:['a) Sin límite de edad para las personas con reconocimiento de dependencia y para las personas en riesgo de aislamiento social con necesidades atendibles desde el servicio, según el Servicio Social de Base.','b) 65 años o más para las personas en riesgo de dependencia.','c) 75 años o más para las personas mayores autónomas que vivan solas.'] } },
+    ]
+  },
+  {
+    id:'w15', range:'08/12 – 14/12', locked:false,
+    temas:[
+      { name:'2.7.1.1 Infancia desprotección', ficha:'Ficha 2.7.1.1', questions:[
+          { text:'¿Cómo define su ficha el servicio de información social a la infancia y a la adolescencia en situación de desprotección (2.7.1.1)?', options:['Un servicio de orientación, asesoramiento e información telefónico o telemático, confidencial y anónimo, dirigido a niños, niñas y adolescentes que deseen expresarse, informarse o recibir asesoramiento sobre situaciones de desprotección','Un servicio exclusivamente presencial en dependencias policiales','Un servicio que solo atiende llamadas de profesionales sanitarios','Un servicio de tramitación de adopciones internacionales'], correct:0 },
+          { text:'¿A qué otras personas, además de niños, niñas y adolescentes, atiende este servicio?', options:['Únicamente a jueces de menores','A todas las personas adultas que deseen informar de supuestas situaciones de desprotección infantil o adolescente, o necesiten orientación sobre cómo actuar','Solo a profesionales de centros escolares','A ninguna otra persona'], correct:1 },
+          { text:'¿Qué hace este servicio cuando percibe un posible riesgo de desprotección o desamparo?', options:['Nada, se limita a escuchar sin actuar','Notifica los casos a los agentes correspondientes para que procedan a la valoración','Interviene directamente sin dar parte a ningún organismo','Cierra el caso sin más trámite'], correct:1 },
+          { text:'¿Quién presta este servicio y con qué periodicidad, según la ficha?', options:['Un equipo multidisciplinar especializado, los 365 días del año','Un único profesional, solo en horario laboral','Voluntariado sin formación específica, los fines de semana','El Servicio Social de Base, solo los lunes'], correct:0 },
+          { text:'¿Cuál de estos NO es uno de los cinco objetivos que enumera la ficha 2.7.1.1?', options:['Estar a la escucha de los niños, niñas y adolescentes cuando lo necesiten','Ofrecer información pertinente, clara y útil','Detectar posibles situaciones de desprotección','Iniciar de oficio un procedimiento judicial de incapacitación'], correct:3 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.7.1.1?', options:['Información, orientación y en su caso derivación, valoración inicial de necesidades y de seguimiento, e intervención psicosocial (contención emocional)','Únicamente transporte adaptado','Solo mediación-intermediación','Exclusivamente prestaciones económicas'], correct:0 },
+          { text:'¿Cuál es la población destinataria de esta ficha, en cuanto a "situación"?', options:['a) Niños, niñas y adolescentes con necesidad de información, orientación o asesoramiento por desprotección; b) personas adultas que crean conocer situaciones de desprotección o necesiten orientación','Únicamente familias adoptantes','Solo profesionales de los servicios sociales','Exclusivamente jueces y fiscales de menores'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.7.1.1?', options:['Solo hasta los 18 años','Sin límites de edad','Solo de 0 a 6 años','Solo de 12 a 18 años'], correct:1 },
+          { text:'¿Qué requisitos administrativos exige la ficha para acceder a este servicio?', options:['Empadronamiento de 6 meses','Ningún requisito, al margen de la prescripción técnica; es un servicio de acceso directo','Autorización judicial previa','Informe del centro escolar'], correct:1 },
+          { text:'¿Qué requisito de necesidad exige la ficha 2.7.1.1?', options:['Ninguno adicional','Tener reconocida previamente una situación de desamparo','Contar con denuncia previa formalizada','Disponer de informe social del Servicio Social de Base'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.1.1, explica los cinco objetivos que persigue este servicio y los dos grupos de población a los que se dirige.', puntos:['Objetivos: a) estar a la escucha de niños, niñas y adolescentes cuando lo necesiten; b) ofrecer información pertinente, clara y útil; c) derivar hacia los recursos más adecuados; d) detectar posibles situaciones de desprotección; e) orientar, asesorar y acompañar a niños, niñas y adolescentes.','Población: a) niños, niñas y adolescentes con necesidad de información, orientación o asesoramiento por situaciones de desprotección; b) personas adultas que crean conocer situaciones de desprotección infantil o adolescente, o que necesiten orientación sobre cómo actuar.'] } },
+      { name:'2.7.1.2 Atención mujeres víctimas', ficha:'Ficha 2.7.1.2', questions:[
+          { text:'¿Cómo define su ficha el servicio de información y atención a mujeres víctimas de violencia doméstica o por razón de sexo (2.7.1.2)?', options:['Un servicio de atención a distancia, por vía telefónica o telemática, que ofrece información, orientación, acompañamiento y apoyo psicológico a mujeres en situaciones de violencia de género','Un servicio exclusivamente presencial en comisaría','Un servicio de alojamiento residencial permanente','Un programa de reeducación para personas agresoras'], correct:0 },
+          { text:'¿Qué características de confidencialidad y horario tiene este servicio, según su ficha?', options:['Es confidencial, se puede llamar de forma anónima, y funciona 24 horas al día, 365 días al año','Solo atiende en horario de mañana entre semana','Requiere identificación previa obligatoria','Solo funciona los fines de semana'], correct:0 },
+          { text:'¿Cuál de estas SÍ es una de las funciones que recoge la ficha 2.7.1.2?', options:['Atender las llamadas con escucha activa, apoyo emocional, favoreciendo una toma de decisiones informada y autónoma','Imponer directamente medidas de alejamiento','Sustituir a la autoridad judicial en la tramitación de denuncias','Obligar a la mujer a abandonar su domicilio de forma inmediata'], correct:0 },
+          { text:'¿Qué otra función, relacionada con recursos del entorno, recoge la ficha?', options:['Facilitar una información completa sobre los recursos existentes (servicios sociales, sanitarios, judiciales, policiales u otros) en el entorno más cercano a las mujeres usuarias','Gestionar directamente el patrimonio de la mujer víctima','Tramitar el divorcio de forma automática','Contratar vivienda en nombre de la usuaria'], correct:0 },
+          { text:'¿Qué ocurre, según la ficha, cuando la persona usuaria accede a solicitar cita en recursos de intervención?', options:['Se le deniega el acceso a cualquier otro recurso','Se procede a su derivación','Se cierra el expediente sin más trámite','Se le exige abonar una tasa administrativa'], correct:1 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales que recoge la ficha 2.7.1.2?', options:['Información; orientación y en su caso derivación; valoración inicial y de seguimiento; intervención socioeducativa y psicosocial; y atención sociojurídica de información','Únicamente alojamiento de urgencia','Solo transporte adaptado','Exclusivamente prestaciones económicas directas'], correct:0 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.1.2, en cuanto a "situación"?', options:['a) Mujeres víctimas de violencia doméstica o por razón de sexo; b) todas las personas interesadas en obtener información sobre estas situaciones','Únicamente mujeres mayores de 30 años','Solo hombres agresores en programas de reeducación','Exclusivamente personal técnico de los servicios sociales'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.7.1.2?', options:['18 años o más, exclusivamente','Sin límites de edad','Solo mujeres de 25 a 55 años','Solo mujeres menores de edad'], correct:1 },
+          { text:'¿Qué exige la ficha 2.7.1.2 como requisitos administrativos?', options:['Empadronamiento de 12 meses','Ningún requisito, al margen de la prescripción técnica; es un servicio de acceso directo','Denuncia previa formalizada','Informe médico-forense'], correct:1 },
+          { text:'¿Qué elemento distingue expresamente a la ficha 2.7.1.2 de la ficha 2.7.1.1 en su propia definición?', options:['La ficha 2.7.1.2 menciona explícitamente el "apoyo psicológico" como parte de lo que ofrece, mientras que la definición de la 2.7.1.1 no lo menciona','No existe ninguna diferencia entre ambas fichas','La ficha 2.7.1.1 es de pago y la 2.7.1.2 es gratuita','La ficha 2.7.1.2 no admite llamadas anónimas, a diferencia de la 2.7.1.1'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.1.2, explica las tres funciones que desarrolla este servicio en la atención telefónica a las mujeres usuarias.', puntos:['a) Atender las llamadas realizando una escucha activa, ofreciendo apoyo emocional y apoyando a las mujeres en el ejercicio de su autonomía personal, favoreciendo una toma de decisiones informada y autónoma.','b) Facilitar una información completa sobre los recursos existentes (servicios sociales, sanitarios, judiciales, policiales u otros) en el entorno más cercano a la mujer usuaria.','c) Cuando la persona usuaria acceda a solicitar cita en recursos de intervención, proceder a su derivación.'] } },
+    ]
+  },
+  {
+    id:'w16', range:'15/12 – 21/12', locked:false,
+    temas:[
+      { name:'2.7.3.2 PEF', ficha:'Ficha 2.7.3.2', questions:[
+          { text:'¿A qué está orientado el Punto de Encuentro Familiar (PEF) por derivación judicial, según su ficha?', options:['A garantizar y facilitar, con carácter temporal, las relaciones de personas menores de edad con quienes conformaron su unidad de convivencia, otros familiares, tutores/guardadores u otras personas allegadas, en un espacio neutral e idóneo','A sustituir de forma permanente el domicilio familiar del menor','A tramitar directamente la custodia definitiva de los hijos e hijas','A ofrecer alojamiento residencial a las familias en conflicto'], correct:0 },
+          { text:'¿Qué debe garantizarse en todos los casos respecto al espacio de encuentro, según la ficha?', options:['Que se ubique siempre en una comisaría de policía','Condiciones de accesibilidad y privacidad en el acceso al espacio de encuentro','Que el espacio esté decorado como una vivienda familiar','Que el encuentro se retransmita en directo para las autoridades'], correct:1 },
+          { text:'¿Qué caracteriza a las "visitas tuteladas en el Punto de Encuentro Familiar"?', options:['Se realizan sin ningún tipo de supervisión','Se realizan en el PEF bajo supervisión presencial y permanente del personal del servicio','Se realizan siempre fuera del PEF','Consisten únicamente en llamadas telefónicas'], correct:1 },
+          { text:'¿En qué consisten los "intercambios", como fórmula de visita del PEF?', options:['En la utilización del PEF únicamente para supervisar la entrega y recogida de los niños, niñas y adolescentes, produciéndose la visita fuera del servicio','En un intercambio de bienes entre las familias','En la mediación económica sobre la pensión alimenticia','En la supervisión permanente de toda la visita dentro del PEF'], correct:0 },
+          { text:'¿En qué consisten los "acompañamientos", según la ficha?', options:['En el acompañamiento a la persona menor de edad, por profesionales del PEF, a un establecimiento penitenciario, hospitalario o residencial donde se encuentre su familiar, cuando no resulte posible el desplazamiento de este al PEF','En acompañar a la familia a hacer la compra semanal','En un servicio de transporte escolar diario','En la supervisión de las tareas escolares del menor'], correct:0 },
+          { text:'¿Cuál de estos NO es uno de los objetivos que enumera la ficha 2.7.3.2?', options:['Garantizar la seguridad y el bienestar de las personas menores de edad durante el régimen de visitas','Mejorar las relaciones materno-paterno-filiales','Facilitar la adquisición de habilidades de crianza y/o relacionales','Determinar de forma vinculante quién obtiene la custodia definitiva'], correct:3 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.3.2, en cuanto a "situación"?', options:['a) Personas menores de edad cuyo derecho de visita no está garantizado o no lo está en condiciones de seguridad y bienestar; b) personas adultas vinculadas al derecho de visita','Únicamente jueces de familia','Solo abogados especializados en derecho de familia','Exclusivamente personas mayores de 65 años'], correct:0 },
+          { text:'¿Qué requisito administrativo, distinto del empadronamiento, exige la ficha 2.7.3.2?', options:['Ninguno adicional','Existir una resolución judicial que ordene la utilización del PEF','Autorización expresa de ambos progenitores por igual','Informe médico-forense favorable'], correct:1 },
+          { text:'¿Qué exige la ficha respecto al periodo de empadronamiento previo?', options:['Se exige un empadronamiento de 12 meses','No se exige ningún periodo previo de empadronamiento','Se exige un empadronamiento de 5 años','Se exige empadronamiento en dos municipios distintos'], correct:1 },
+          { text:'Entre los requisitos de necesidad, ¿qué dos supuestos contempla la ficha 2.7.3.2?', options:['Que la persona menor forme parte de una familia con conflictos de ruptura de pareja y problemas graves de cumplimiento del régimen de visitas, o que existan conflictos de ruptura de pareja con una medida de alejamiento y protección a la víctima en vigor o en tramitación','Que los progenitores estén de acuerdo en todo, sin conflicto alguno','Que el menor tenga más de 16 años','Que exista una sentencia penal firme contra uno de los progenitores'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.3.2, enumera las distintas fórmulas de visita que puede ofrecer el Punto de Encuentro Familiar y explica la diferencia entre las "visitas tuteladas fuera del PEF" y los "intercambios".', puntos:['Fórmulas de visita: visitas tuteladas en el PEF, visitas sin supervisión en el PEF, visitas tuteladas fuera del PEF, intercambios, y acompañamientos.','Visitas tuteladas fuera del PEF: se realizan con carácter puntual y constituyen, preferentemente, una fase intermedia de adaptación previa a las visitas sin supervisión.','Intercambios: el PEF se utiliza únicamente para supervisar la entrega y recogida de los niños, niñas y adolescentes, produciéndose la visita fuera del servicio.'] } },
+      { name:'2.7.3.3 Mediación familiar', ficha:'Ficha 2.7.3.3', questions:[
+          { text:'¿Cómo define su ficha la mediación familiar?', options:['Un procedimiento voluntario en el que uno o más profesionales cualificados, imparciales y sin poder decisorio, ayudan y orientan a las partes en un procedimiento dialogado para encontrar soluciones que permitan concluir su conflicto familiar','Un procedimiento judicial obligatorio previo al divorcio','Una terapia psicológica individual sin intervención de ambas partes','Una decisión vinculante que sustituye a la sentencia judicial'], correct:0 },
+          { text:'¿Qué significa que la mediación familiar sea "integral", según la ficha?', options:['Que se resuelve en una única sesión','Que implica una actuación coordinada con el resto de servicios del SVSS y con otros sistemas públicos de protección social, en todos los ámbitos necesarios','Que solo se aplica a familias integradas por más de 4 miembros','Que sustituye por completo a los servicios sociales municipales'], correct:1 },
+          { text:'¿Cuál de estos SÍ es un conflicto originado por ruptura de pareja que la ficha menciona como susceptible de mediación?', options:['La atribución de la guarda y custodia de los hijos e hijas','La declaración de incapacitación judicial de uno de los progenitores','El proceso penal por un delito no relacionado con la familia','La tramitación de una prestación de desempleo'], correct:0 },
+          { text:'¿Cuál de estos SÍ es un conflicto familiar NO vinculado a la ruptura de pareja que recoge la ficha?', options:['La atención y cuidado de personas adultas en riesgo o situación de dependencia por sus familiares','El reparto de una herencia empresarial internacional','Un litigio mercantil entre socios','Una disputa vecinal por ruidos'], correct:0 },
+          { text:'¿Qué casos quedan expresamente excluidos de la mediación familiar, según la ficha?', options:['Los casos en los que exista violencia o maltrato sobre la pareja, hijos/as o cualquier miembro de la unidad familiar, o actuaciones constitutivas de ilícito penal','Los casos en los que haya más de dos hijos/as','Los casos en los que ambas partes tengan estudios universitarios','Los casos en los que la pareja lleve casada más de 10 años'], correct:0 },
+          { text:'¿Cuál de estos NO es uno de los objetivos que enumera la ficha 2.7.3.3?', options:['Ofrecer un espacio neutral que permita el diálogo entre las personas protagonistas de un conflicto familiar','Favorecer la toma de decisiones consensuadas en los procesos de ruptura y fomentar la coparentalidad','Facilitar el proceso de aceptación de la ruptura y la adaptación a la nueva situación','Emitir una resolución vinculante sobre la custodia de los hijos e hijas'], correct:3 },
+          { text:'¿Cuáles son las prestaciones de servicios sociales de la ficha 2.7.3.3?', options:['Mediación y valoración de seguimiento','Atención sociojurídica y alojamiento de urgencia','Transporte adaptado y manutención','Intervención socioeducativa y acompañamiento social'], correct:0 },
+          { text:'¿Cuál es la población destinataria de la ficha 2.7.3.3?', options:['Personas en situación de conflicto familiar o convivencial','Únicamente personas ya divorciadas judicialmente','Solo familias con menores de 6 años','Exclusivamente parejas sin hijos/as'], correct:0 },
+          { text:'¿Qué límite de edad establece la ficha 2.7.3.3?', options:['18 a 64 años','Sin límites de edad','Solo menores de edad','Solo mayores de 65 años'], correct:1 },
+          { text:'¿Qué característica esencial debe tener la persona mediadora, según la ficha?', options:['Debe tener poder decisorio sobre el conflicto','Debe ser imparcial y no tener poder decisorio','Debe ser un familiar cercano de una de las partes','Debe pertenecer al poder judicial'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 2.7.3.3, explica qué se entiende por "mediación familiar" y qué tipo de situaciones quedan expresamente excluidas de este servicio.', puntos:['Mediación familiar: procedimiento voluntario en el que uno o más profesionales cualificados en mediación, imparciales y sin poder decisorio, ayudan y orientan a las partes en un procedimiento dialogado para encontrar soluciones aceptables que permitan concluir su conflicto familiar.','Exclusiones: quedan fuera de la mediación familiar los casos en los que exista violencia o maltrato sobre la pareja, hijos/as o cualquier miembro de la unidad familiar, así como cualquier actuación que pueda ser constitutiva de ilícito penal.'] } },
+    ]
+  },
+  { id:'w17', range:'29/12 – 04/01', locked:true, special:'REPASO GENERAL', temas:[] },
+  {
+    id:'w18', range:'05/01 – 11/01', locked:false,
+    temas:[
+      { name:'3.1.2 Pago único violencia género', ficha:'Ficha 3.1.2', questions:[
+          { text:'¿A quién se destina la prestación económica de pago único a mujeres víctimas de violencia de género (3.1.2)?', options:['A cualquier mujer, sin más condición','A mujeres víctimas de violencia de género con especiales dificultades para incorporarse al mercado laboral','Únicamente a mujeres mayores de 55 años','A mujeres embarazadas sin relación con la violencia de género'], correct:1 },
+          { text:'¿Cuál es la finalidad de esta prestación, según su ficha?', options:['Contribuir a paliar temporalmente la ausencia de ingresos, para que la persona consiga estabilizar su situación y tramitar las pensiones o prestaciones que le correspondan','Sustituir de forma permanente el salario de la víctima','Financiar exclusivamente un cambio de domicilio','Cubrir los gastos de un proceso judicial de divorcio'], correct:0 },
+          { text:'¿Qué carácter tiene esta prestación económica?', options:['Periódico mensual, de forma indefinida','De pago único','Trimestral durante 2 años','Bianual'], correct:1 },
+          { text:'¿Con qué es incompatible esta prestación, según la ficha?', options:['Con cualquier otra ayuda de las administraciones públicas o de entidades privadas destinada al mismo fin','Con el empadronamiento en la CAPV','Con tener hijos/as a cargo','Con cualquier tipo de empleo futuro'], correct:0 },
+          { text:'¿Con qué SÍ es compatible esta prestación, según la ficha?', options:['Con las ayudas previstas en la Ley 35/1995 de Ayudas y Asistencia a las Víctimas de Delitos Violentos y contra la Libertad Sexual, y con otras prestaciones de garantía de ingresos (computándose como ingresos)','Con ninguna otra ayuda, en ningún caso','Solo con prestaciones de otros países de la Unión Europea','Solo con becas de estudios universitarios'], correct:0 },
+          { text:'¿Cuál es el importe general de esta prestación, tomando como referente el subsidio de desempleo?', options:['Equivalente a 3 meses de subsidio','Equivalente a 6 meses de subsidio','Equivalente a 12 meses de subsidio, con carácter general','Equivalente a 24 meses de subsidio, con carácter general'], correct:1 },
+          { text:'¿A cuánto puede alcanzar el importe cuando la víctima tiene responsabilidades familiares y ella o alguna persona a su cargo tiene reconocida una discapacidad igual o superior al 33%?', options:['6 meses de subsidio','12 meses de subsidio','18 meses de subsidio','24 meses de subsidio'], correct:3 },
+          { text:'¿Mediante qué medios puede acreditarse ser víctima de violencia de género, según la ficha?', options:['Sentencia condenatoria con medidas de protección (no más de 2 años desde su entrada en vigor), orden de protección en vigor, o excepcionalmente informe del Ministerio Fiscal','Únicamente declaración jurada de la propia interesada, sin más prueba','Solo testimonio de un familiar','Solo certificado médico de lesiones recientes'], correct:0 },
+          { text:'¿Qué límite de rentas exige la ficha para acceder a esta prestación?', options:['Carecer de rentas que, en cómputo mensual, superen el 75% del salario mínimo interprofesional vigente (excluida la parte proporcional de dos pagas extraordinarias)','No se exige ningún límite de rentas','Tener rentas superiores al doble del SMI','Solo se exige no tener ningún ingreso, sea cual sea la cuantía'], correct:0 },
+          { text:'¿Se puede percibir esta ayuda más de una vez, según la ficha?', options:['Sí, cuantas veces se solicite','No, se exige no haber percibido esta ayuda con anterioridad','Sí, pero solo dos veces en la vida','Sí, una vez al año'], correct:1 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.1.2, explica cómo varía el importe de la prestación de pago único a mujeres víctimas de violencia de género en función de la discapacidad y de las personas a cargo.', puntos:['Importe general: equivalente a 6 meses de subsidio de desempleo.','a) Si la víctima tiene reconocida oficialmente una discapacidad igual o superior al 33%: equivalente a 12 meses de subsidio.','b) Si tiene personas a su cargo que convivan con ella: hasta 18 meses de subsidio.','c) Si, teniendo responsabilidades familiares, ella o alguna persona a su cargo que conviva con ella tiene discapacidad igual o superior al 33%: hasta 24 meses de subsidio.'] } },
+      { name:'3.4.1 PEVS', ficha:'Ficha 3.4.1', questions:[
+          { text:'¿De qué administración es competencia la Prestación Económica Vinculada al Servicio (PEVS, 3.4.1), según su ficha?', options:['Siempre y exclusivamente del Gobierno Vasco','Municipal, foral o del Gobierno Vasco, dependiendo de quién sea competente del servicio al que se vincule','Siempre y exclusivamente municipal','Siempre y exclusivamente foral'], correct:1 },
+          { text:'¿Cuál es el objetivo de la PEVS, según su ficha?', options:['Sustituir de forma definitiva cualquier servicio del SVSS','Facilitar el acceso, fuera del SVSS, a una prestación o servicio de características similares a aquel al que tiene derecho la persona usuaria, cuando su acceso no pueda garantizarse temporalmente por falta de cobertura suficiente','Financiar exclusivamente tratamientos médicos privados','Pagar el alquiler de cualquier vivienda, sin condición alguna'], correct:1 },
+          { text:'¿A qué tipo de servicios es aplicable la PEVS, según la ficha?', options:['A cualquier servicio, sin condición alguna','Únicamente a servicios cuya provisión se encuentre en curso de desarrollo de acuerdo con la planificación del SVSS','Solo a servicios de competencia municipal','Solo a servicios ya completamente implantados y sin lista de espera'], correct:1 },
+          { text:'Cuando la PEVS se destina a una persona en situación de dependencia, ¿en qué sistema se enmarca?', options:['En el sistema educativo','En el SAAD (Sistema para la Autonomía y Atención a la Dependencia)','En el sistema de Seguridad Social exclusivamente','En ningún sistema específico'], correct:1 },
+          { text:'¿Qué carácter tiene la PEVS, según su ficha?', options:['De pago único, siempre','Periódico','Solo se abona una vez cada 5 años','Bianual'], correct:1 },
+          { text:'¿Qué carácter adicional tiene la PEVS, más allá de ser periódica?', options:['Es permanente e indefinida una vez concedida','Es de carácter temporal y excepcional, otorgándose solo durante el periodo entre el reconocimiento del derecho y el acceso efectivo a la prestación o servicio dentro del SVSS','Es vitalicia','Es hereditaria'], correct:1 },
+          { text:'¿Cuándo se extingue la PEVS, según su ficha?', options:['Nunca se extingue','Cuando la persona accede a un servicio integrado en el SVSS','Solo cuando la persona cumple 65 años','Solo si la persona cambia de municipio'], correct:1 },
+          { text:'¿Quién fija anualmente el importe máximo de la PEVS?', options:['Las Administraciones competentes','Únicamente el Gobierno Vasco, en todos los casos','Únicamente los Ayuntamientos, en todos los casos','Osakidetza'], correct:0 },
+          { text:'¿Qué servicio puede simultanearse con la PEVS sin afectar a su importe, según la ficha?', options:['El servicio de ayuda a domicilio, sin excepción','El servicio de teleasistencia','El centro residencial, sin excepción','Ningún servicio puede simultanearse'], correct:1 },
+          { text:'¿En qué se diferencia fundamentalmente la PEVS de otras prestaciones económicas como la PEAP o la PECEF?', options:['En que la PEVS da acceso a una prestación o servicio de características similares FUERA del SVSS, mientras que la PEAP y la PECEF están vinculadas a la atención dentro del propio sistema','No existe ninguna diferencia relevante','En que la PEVS es siempre de pago único, y las otras son siempre periódicas','En que la PEVS solo puede solicitarla el Gobierno Vasco'], correct:0 },
+        ],
+        desarrollo:{ pregunta:'Según la ficha 3.4.1, explica en qué consiste la Prestación Económica Vinculada al Servicio (PEVS) y por qué tiene carácter temporal y excepcional.', puntos:['La PEVS facilita el acceso, fuera del SVSS, a una prestación o servicio de características similares a aquel al que la persona usuaria tiene derecho dentro del Catálogo, cuando su acceso no puede garantizarse temporalmente por falta de cobertura suficiente.','Solo es aplicable a servicios cuya provisión esté en curso de desarrollo según la planificación del SVSS.','Carácter temporal y excepcional: se otorga únicamente durante el periodo que media entre el reconocimiento del derecho de la persona usuaria y su acceso efectivo a la correspondiente prestación o servicio dentro del SVSS, extinguiéndose en ese momento.'] } },
+    ]
+  },
+];
+
+/* ===================== USUARIO (login simple por nombre) ===================== */
+const USER_KEY = 'repaso-svss-usuario';
+function loadUsername(){
+  try{ return localStorage.getItem(USER_KEY) || null; }catch(e){ return null; }
+}
+function saveUsername(name){
+  try{ localStorage.setItem(USER_KEY, name); }catch(e){}
+}
+let currentUser = loadUsername();
+
+function doLogin(){
+  const input = document.getElementById('login-name-input');
+  const name = input ? input.value.trim() : '';
+  if(!name) return;
+  currentUser = name;
+  saveUsername(name);
+  progress = loadProgress(name);
+  state.view = 'home';
+  render();
+}
+function logout(){
+  try{ localStorage.removeItem(USER_KEY); }catch(e){}
+  currentUser = null;
+  progress = { weeks:{} };
+  state = { view:'login', weekId:null, answers:{}, submitted:false, repasoCount:10, repasoSelected:new Set(weeks.filter(w=>!w.locked).map(w=>w.id)), repasoSet:null, repasoAnswers:{}, repasoSubmitted:false, registroData:null, registroLoading:false, registroError:null };
+  render();
+}
+
+/* ===================== PERSISTENCIA (localStorage, por usuario) ===================== */
+function progressKey(user){ return 'repaso-svss-progreso__' + user; }
+function loadProgress(user){
+  try{
+    const raw = localStorage.getItem(progressKey(user));
+    return raw ? JSON.parse(raw) : { weeks:{} };
+  }catch(e){ return { weeks:{} }; }
+}
+function saveProgress(){
+  if(!currentUser) return;
+  try{ localStorage.setItem(progressKey(currentUser), JSON.stringify(progress)); }catch(e){ /* almacenamiento no disponible */ }
+}
+let progress = currentUser ? loadProgress(currentUser) : { weeks:{} };
+function clearProgress(){
+  if(confirm('¿Seguro que quieres borrar TU progreso guardado en este navegador? Esta acción no se puede deshacer. (El registro compartido con las demás personas no se ve afectado.)')){
+    progress = { weeks:{} };
+    saveProgress();
+    state.answers = {}; state.submitted = false;
+    render();
+  }
+}
+
+/* ===================== ESTADO ===================== */
+let state = { view: currentUser ? 'home' : 'login', weekId:null, answers:{}, submitted:false, repasoCount:10, repasoSelected:new Set(weeks.filter(w=>!w.locked).map(w=>w.id)), repasoSet:null, repasoAnswers:{}, repasoSubmitted:false, registroData:null, registroLoading:false, registroError:null };
+
+/* ===================== HELPERS ===================== */
+function flatQuestionsFromWeek(w){
+  const out = [];
+  w.temas.forEach(t => t.questions && t.questions.forEach((q,i)=> out.push({...q, tema:t.name, ficha:t.ficha, qid:t.name+'-'+i})));
+  return out;
+}
+function allAvailableQuestions(selectedIds){
+  let out = [];
+  weeks.filter(w=>!w.locked && selectedIds.has(w.id)).forEach(w=> out = out.concat(flatQuestionsFromWeek(w).map(q=>({...q, week:w.range}))));
+  return out;
+}
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===================== RENDER ===================== */
+function render(){
+  const app = document.getElementById('app');
+  if(state.view === 'login'){
+    app.innerHTML = renderLogin();
+    setTimeout(()=>{ const el = document.getElementById('login-name-input'); if(el) el.focus(); }, 0);
+    return;
+  }
+  app.innerHTML = `
+    <div class="sidebar">
+      <div class="brand">DECRETO 185/2015 · SVSS</div>
+      <h1 class="brand-title">Repaso semanal</h1>
+      <div class="user-badge">
+        <span class="u-name">👤 ${currentUser}</span>
+        <a class="u-switch" href="#" onclick="logout();return false;">Cambiar</a>
+      </div>
+      <button class="repaso-btn" onclick="goRepaso()">↻ Modo repaso (10 / 15 / 20 preg.)</button>
+      <button class="repaso-btn" style="background:#28374A; color:#fff;" onclick="goRegistro()">📋 Registro de todo el equipo</button>
+      <div class="timeline-label">Cronograma</div>
+      <ul class="timeline">
+        ${weeks.map(w => {
+          const p = progress.weeks[w.id];
+          const doneBadge = (p && p.submitted) ? `<span class="tl-tag" style="background:var(--ok);color:#fff;">${p.correct}/${p.total} guardado</span>` : '';
+          return `
+          <li class="tl-item ${state.weekId===w.id?'active':''} ${w.locked?'locked':''}" onclick="${w.locked? '' : `openWeek('${w.id}')`}">
+            <div class="tl-range">${w.range}</div>
+            <div class="tl-temas">${w.special ? w.special : w.temas.map(t=>t.name).join(' · ')}</div>
+            ${w.locked ? '<span class="tl-tag">Pendiente</span>' : doneBadge}
+          </li>
+        `;}).join('')}
+      </ul>
+      <div style="margin-top:22px;">
+        <a href="#" onclick="clearProgress();return false;" style="color:#67728A; font-size:11px; text-decoration:none;">Borrar mi progreso guardado</a>
+      </div>
+    </div>
+    <div class="main">${renderMain()}</div>
+  `;
+}
+
+function renderLogin(){
+  return `
+    <div class="login-screen">
+      <div class="login-box">
+        <div class="brand">DECRETO 185/2015 · SVSS</div>
+        <h1 class="serif">¿Cómo te llamas?</h1>
+        <p>Escribe tu nombre para guardar tu progreso y que aparezca en el registro compartido del equipo.</p>
+        <input id="login-name-input" type="text" placeholder="Ej. Ane, Jon, Maite..." maxlength="40" onkeydown="if(event.key==='Enter'){ doLogin(); }">
+        <button class="btn" style="width:100%;" onclick="doLogin()">Entrar</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderMain(){
+  if(state.view==='home') return renderHome();
+  if(state.view==='week') return renderWeek();
+  if(state.view==='repaso-config') return renderRepasoConfig();
+  if(state.view==='repaso-quiz') return renderRepasoQuiz();
+  if(state.view==='registro') return renderRegistro();
+  return '';
+}
+
+function renderHome(){
+  const completedIds = Object.keys(progress.weeks).filter(id => progress.weeks[id].submitted);
+  const completedCount = completedIds.length;
+  let avgText = '—';
+  if(completedCount > 0){
+    const totalCorrect = completedIds.reduce((s,id)=> s + progress.weeks[id].correct, 0);
+    const totalQ = completedIds.reduce((s,id)=> s + progress.weeks[id].total, 0);
+    avgText = Math.round((totalCorrect/totalQ)*100) + '%';
+  }
+  return `
+    <div class="eyebrow">Cronograma completo</div>
+    <h2 class="page-title serif">Bienvenida al repaso semanal</h2>
+    <p class="page-sub">Cada semana: 20 preguntas tipo test (10 por tema, alta dificultad, 4 opciones) + 1 pregunta de desarrollo por tema, basadas exclusivamente en el recuadro de cada ficha del Anexo I del Decreto 185/2015. El Modo repaso te deja elegir qué semanas mezclar y cuántas preguntas responder (10/15/20). Tu progreso se guarda automáticamente en este navegador, así que puedes cerrar la pestaña y seguir donde lo dejaste.</p>
+    <div class="home-grid">
+      <div class="card"><h3>17</h3><p>semanas con contenido real, verificado ficha a ficha contra el Anexo I</p></div>
+      <div class="card"><h3>${completedCount}</h3><p>semanas que ya has completado en este navegador</p></div>
+      <div class="card"><h3>${avgText}</h3><p>tu acierto medio en las semanas completadas</p></div>
+      <div class="card"><h3>10/15/20</h3><p>preguntas configurables en el Modo repaso</p></div>
+    </div>
+  `;
+}
+
+function renderWeek(){
+  const w = weeks.find(x=>x.id===state.weekId);
+  let html = `<div class="eyebrow">Semana ${w.range}</div><h2 class="page-title serif">Quiz semanal</h2>`;
+  if(w.sample) html += `<div class="placeholder-flag">Contenido de muestra — pendiente de redacción final</div>`;
+
+  w.temas.forEach((t, ti) => {
+    html += `<div class="tema-block"><div class="tema-heading"><h2>${t.name}</h2><span class="tema-count">10 preguntas</span></div>`;
+    t.questions.forEach((q, qi) => {
+      const key = t.name+'-'+qi;
+      const chosen = state.answers[key];
+      html += `<div class="q"><span class="q-num">P${qi+1}<span class="q-ficha">${t.ficha}</span></span><p class="q-text">${q.text}</p>`;
+      q.options.forEach((opt, oi) => {
+        let cls = 'opt';
+        if(state.submitted){
+          if(oi===q.correct) cls += ' correct';
+          else if(chosen===oi) cls += ' incorrect';
+        }
+        html += `<label class="${cls}"><input type="radio" name="${key}" ${chosen===oi?'checked':''} ${state.submitted?'disabled':''} onchange="setAnswer('${key}',${oi})"> ${opt}</label>`;
+      });
+      html += `</div>`;
+    });
+    html += `<div class="dev-q"><span class="q-num">Desarrollo<span class="q-ficha">${t.ficha}</span></span><p class="q-text" style="color:#fff">${t.desarrollo.pregunta}</p>
+      <textarea placeholder="Escribe aquí tu respuesta..."></textarea>
+      <button class="reveal-btn" onclick="this.nextElementSibling.classList.toggle('open')">Ver puntos clave</button>
+      <div class="reveal-box"><ul>${t.desarrollo.puntos.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    </div>`;
+  });
+
+  const total = flatQuestionsFromWeek(w).length;
+  const correct = flatQuestionsFromWeek(w).filter(q => state.answers[q.qid]===q.correct).length;
+
+  html += `<div class="submit-bar">
+    ${state.submitted
+      ? `<span class="score">Resultado: ${correct} / ${total} correctas</span><button class="btn" onclick="resetWeek()">Repetir</button>`
+      : `<span class="score">${Object.keys(state.answers).length} / ${total} respondidas</span><button class="btn" onclick="submitWeek()">Corregir</button>`
+    }
+  </div>`;
+  return html;
+}
+
+function renderRepasoConfig(){
+  const availableCount = allAvailableQuestions(state.repasoSelected).length;
+  const noneSelected = state.repasoSelected.size===0;
+  return `
+    <div class="eyebrow">Modo repaso</div>
+    <h2 class="page-title serif">Elige qué semanas y cuántas preguntas</h2>
+    <p class="page-sub">Marca las semanas que quieres incluir en la mezcla — solo entran las que ya tienen contenido. Luego elige cuántas preguntas quieres responder.</p>
+    <div class="repaso-config" style="max-width:560px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;">Semanas a incluir</span>
+        <span style="font-size:12px;">
+          <a href="#" onclick="selectAllWeeks(true);return false;" style="color:var(--gold); text-decoration:none; margin-right:10px;">Todas</a>
+          <a href="#" onclick="selectAllWeeks(false);return false;" style="color:var(--muted); text-decoration:none;">Ninguna</a>
+        </span>
+      </div>
+      <div style="max-height:260px; overflow-y:auto; border:1px solid var(--line); border-radius:3px; margin-bottom:22px;">
+        ${weeks.map(w => `
+          <label style="display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-bottom:1px solid var(--line); cursor:${w.locked?'default':'pointer'}; opacity:${w.locked?0.45:1};">
+            <input type="checkbox" style="margin-top:3px; accent-color:var(--gold);" ${w.locked?'disabled':''} ${state.repasoSelected.has(w.id)?'checked':''} onchange="toggleRepasoWeek('${w.id}')">
+            <span>
+              <span style="font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--muted); display:block;">${w.range}${w.locked?' · sin contenido todavía':''}</span>
+              <span style="font-size:13.5px;">${w.special ? w.special : w.temas.map(t=>t.name).join(' · ')}</span>
+            </span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="segmented">
+        ${[10,15,20].map(n=>`<div class="seg-opt ${state.repasoCount===n?'sel':''}" onclick="setRepasoCount(${n})">${n} preguntas</div>`).join('')}
+      </div>
+      <p style="font-size:12.5px; color:var(--muted); margin:-8px 0 16px 0;">${availableCount} preguntas disponibles en las semanas seleccionadas.</p>
+      <button class="btn" onclick="startRepaso()" ${(noneSelected || availableCount===0)?'disabled style="opacity:.5;cursor:not-allowed;"':''}>Generar repaso</button>
+    </div>
+  `;
+}
+
+function renderRepasoQuiz(){
+  const set = state.repasoSet;
+  let correct = set.filter(q => state.repasoAnswers[q.qid]===q.correct).length;
+  let html = `<div class="eyebrow">Modo repaso · ${set.length} preguntas</div><h2 class="page-title serif">Repaso mezclado</h2>`;
+  set.forEach((q, i) => {
+    const chosen = state.repasoAnswers[q.qid];
+    html += `<div class="q"><span class="q-num">P${i+1} · ${q.week}<span class="q-ficha">${q.ficha}</span></span><p class="q-text">${q.text}</p>`;
+    q.options.forEach((opt, oi) => {
+      let cls = 'opt';
+      if(state.repasoSubmitted){
+        if(oi===q.correct) cls += ' correct';
+        else if(chosen===oi) cls += ' incorrect';
+      }
+      html += `<label class="${cls}"><input type="radio" name="r-${q.qid}" ${chosen===oi?'checked':''} ${state.repasoSubmitted?'disabled':''} onchange="setRepasoAnswer('${q.qid}',${oi})"> ${opt}</label>`;
+    });
+    html += `</div>`;
+  });
+  html += `<div class="submit-bar">
+    ${state.repasoSubmitted
+      ? `<span class="score">Resultado: ${correct} / ${set.length} correctas</span><button class="btn" onclick="goRepaso()">Nuevo repaso</button>`
+      : `<span class="score">${Object.keys(state.repasoAnswers).length} / ${set.length} respondidas</span><button class="btn" onclick="submitRepaso()">Corregir</button>`
+    }
+  </div>`;
+  return html;
+}
+
+/* ===================== ACCIONES ===================== */
+function openWeek(id){
+  state.view='week'; state.weekId=id;
+  const saved = progress.weeks[id];
+  if(saved){ state.answers = {...saved.answers}; state.submitted = !!saved.submitted; }
+  else { state.answers={}; state.submitted=false; }
+  render();
+}
+function setAnswer(key, oi){
+  state.answers[key]=oi;
+  progress.weeks[state.weekId] = { ...progress.weeks[state.weekId], answers: state.answers, submitted: state.submitted };
+  saveProgress();
+  render();
+}
+function submitWeek(){
+  state.submitted=true;
+  const w = weeks.find(x=>x.id===state.weekId);
+  const total = flatQuestionsFromWeek(w).length;
+  const correct = flatQuestionsFromWeek(w).filter(q => state.answers[q.qid]===q.correct).length;
+  progress.weeks[state.weekId] = { answers: state.answers, submitted:true, correct, total, date: new Date().toISOString() };
+  saveProgress();
+  if(firebaseReady && currentUser){
+    const temaNames = w.temas.map(t=>t.name).join(' · ');
+    db.collection('resultados').doc(currentUser + '__' + state.weekId).set({
+      name: currentUser,
+      weekId: state.weekId,
+      weekRange: w.range,
+      temaNames: temaNames,
+      correct: correct,
+      total: total,
+      timestampMillis: Date.now()
+    }).catch(err => console.warn('No se pudo guardar en el registro compartido:', err));
+  }
+  render();
+}
+function resetWeek(){
+  state.answers={}; state.submitted=false;
+  delete progress.weeks[state.weekId];
+  saveProgress();
+  render();
+}
+
+function goRegistro(){
+  state.view = 'registro';
+  if(!firebaseReady){ render(); return; }
+  state.registroLoading = true;
+  state.registroError = null;
+  render();
+  db.collection('resultados').get().then(snap => {
+    const rows = [];
+    snap.forEach(doc => rows.push(doc.data()));
+    state.registroData = rows;
+    state.registroLoading = false;
+    render();
+  }).catch(err => {
+    state.registroLoading = false;
+    state.registroError = 'No se pudo cargar el registro compartido: ' + err.message;
+    render();
+  });
+}
+
+function renderRegistro(){
+  let html = `<div class="eyebrow">Registro compartido</div><h2 class="page-title serif">Progreso de todo el equipo</h2>`;
+
+  if(!firebaseReady){
+    html += `<p class="page-sub">El registro compartido todavía no está activado. Hay que configurar el proyecto de Firebase (variable <code>firebaseConfig</code> al inicio del archivo) para que los resultados de todas las personas se guarden en la nube y se vean aquí.</p>`;
+    return html;
+  }
+  if(state.registroLoading){
+    html += `<p class="reg-loading">Cargando resultados de todo el equipo…</p>`;
+    return html;
+  }
+  if(state.registroError){
+    html += `<p class="reg-empty">${state.registroError}</p>`;
+    return html;
+  }
+  const rows = state.registroData || [];
+  if(rows.length===0){
+    html += `<p class="reg-empty">Todavía no hay resultados guardados. En cuanto alguien corrija una semana, aparecerá aquí.</p>`;
+    return html;
+  }
+
+  const byUser = {};
+  rows.forEach(r => {
+    if(!byUser[r.name]) byUser[r.name] = { weeksCount:0, correct:0, total:0 };
+    byUser[r.name].weeksCount += 1;
+    byUser[r.name].correct += r.correct;
+    byUser[r.name].total += r.total;
+  });
+  html += `<div class="reg-summary-grid">`;
+  Object.keys(byUser).sort().forEach(name => {
+    const u = byUser[name];
+    const pct = u.total>0 ? Math.round((u.correct/u.total)*100) : 0;
+    html += `<div class="reg-summary-card"><div class="u">${name}</div><div class="s">${u.weeksCount} semana(s) resueltas · ${pct}% de acierto</div></div>`;
+  });
+  html += `</div>`;
+
+  const sorted = [...rows].sort((a,b) => (b.timestampMillis||0) - (a.timestampMillis||0));
+  html += `<table class="reg-table"><thead><tr><th>Usuario</th><th>Semana</th><th>Puntuación</th><th>%</th><th>Fecha</th></tr></thead><tbody>`;
+  sorted.forEach(r => {
+    const pct = r.total>0 ? Math.round((r.correct/r.total)*100) : 0;
+    const dateStr = r.timestampMillis ? new Date(r.timestampMillis).toLocaleString('es-ES', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    html += `<tr><td>${r.name}</td><td>${r.weekRange}${r.temaNames ? ' · ' + r.temaNames : ''}</td><td class="reg-score">${r.correct}/${r.total}</td><td class="reg-score">${pct}%</td><td>${dateStr}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+function goRepaso(){ state.view='repaso-config'; render(); }
+function setRepasoCount(n){ state.repasoCount=n; render(); }
+function toggleRepasoWeek(id){
+  if(state.repasoSelected.has(id)) state.repasoSelected.delete(id); else state.repasoSelected.add(id);
+  render();
+}
+function selectAllWeeks(all){
+  state.repasoSelected = all ? new Set(weeks.filter(w=>!w.locked).map(w=>w.id)) : new Set();
+  render();
+}
+function startRepaso(){
+  const pool = shuffle(allAvailableQuestions(state.repasoSelected));
+  state.repasoSet = pool.slice(0, Math.min(state.repasoCount, pool.length));
+  state.repasoAnswers = {};
+  state.repasoSubmitted = false;
+  state.view = 'repaso-quiz';
+  render();
+}
+function setRepasoAnswer(qid, oi){ state.repasoAnswers[qid]=oi; render(); }
+function submitRepaso(){ state.repasoSubmitted=true; render(); }
+
+render();
+</script>
+</body>
+</html>
